@@ -1720,6 +1720,9 @@ function openAddDeal(){
   document.getElementById('cl-section').style.display='none';
   document.getElementById('cl-list').style.display='none';
   document.getElementById('cl-add-wrap').style.display='none';
+  document.getElementById('tl-section').style.display='none';
+  document.getElementById('tl-list').style.display='none';
+  document.getElementById('f-reason-row').style.display='none';
   document.getElementById('deal-mo').classList.add('open');
 }
 function editDeal(id){
@@ -1745,6 +1748,13 @@ function editDeal(id){
   document.getElementById('f-dtc').value=d.daysToClose||'';
   document.getElementById('f-fnum').value=d.followUpNum||'';
   document.getElementById('f-no').value=d.notes||'';
+  document.getElementById('f-win-reason').value=d.winReason||'';
+  document.getElementById('f-loss-reason').value=d.lossReason||'';
+  document.getElementById('f-prop-status').value=d.proposalStatus||'';
+  document.getElementById('f-prop-link').value=d.proposalLink||'';
+  document.getElementById('f-prop-date').value=d.proposalDate||'';
+  document.getElementById('f-prop-value').value=d.proposalValue||d.value||'';
+  outcomeChg();
   document.getElementById('f-prob').value=d.prob!=null?d.prob:DEF_PROB[d.stage||'Lead'];
   updP();
   // Show call log
@@ -1755,6 +1765,7 @@ function editDeal(id){
   document.getElementById('ql-note').value='';
   document.getElementById('quick-log').classList.remove('open');
   renderCallLog(d);
+  renderTimeline(d.id);
   document.getElementById('deal-mo').classList.add('open');
 }
 function renderCallLog(d){
