@@ -269,6 +269,20 @@ export async function onRequest(context) {
         return jsonResp({ success: true }, 200, request);
       }
 
+      // ─── POST /api/activities/bulk ───
+      if (path === '/api/activities/bulk' && method === 'POST') {
+        const body = await request.json();
+        if (!Array.isArray(body.activities)) return jsonResp({ error: 'activities array required' }, 400, request);
+        let inserted = 0;
+        for (const a of body.activities) {
+          const id = a.id || ('act_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
+          await env.DB.prepare('INSERT OR REPLACE INTO activities (id, type, deal_id, company, rep, note, due_date, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
+            id, a.type||'Call', a.deal_id||'', a.company||'', a.rep||'Udara', a.note||'', a.due_date||'', a.status||'Pending', a.created_at||new Date().toISOString()).run();
+          inserted++;
+        }
+        return jsonResp({ success: true, inserted }, 200, request);
+      }
+
       // ─── LINKEDIN LEADS ───
       if (path === '/api/li-leads' && method === 'GET') {
         const results = await env.DB.prepare('SELECT * FROM li_leads ORDER BY date DESC').all();
@@ -281,6 +295,20 @@ export async function onRequest(context) {
           id, body.name||'', body.company||'', body.title||'', body.status||'Connected', body.message||'', body.date||'', body.rep||'VA', body.notes||'', new Date().toISOString()).run();
         return jsonResp({ success: true, id }, 200, request);
       }
+      // ─── POST /api/li-leads/bulk ───
+      if (path === '/api/li-leads/bulk' && method === 'POST') {
+        const body = await request.json();
+        if (!Array.isArray(body.leads)) return jsonResp({ error: 'leads array required' }, 400, request);
+        let inserted = 0;
+        for (const l of body.leads) {
+          const id = l.id || ('li_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
+          await env.DB.prepare('INSERT OR REPLACE INTO li_leads (id, name, company, title, status, message, date, rep, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
+            id, l.name||'', l.company||'', l.title||'', l.status||'Connected', l.message||'', l.date||'', l.rep||'VA', l.notes||'', l.created_at||new Date().toISOString()).run();
+          inserted++;
+        }
+        return jsonResp({ success: true, inserted }, 200, request);
+      }
+
       if (path === '/api/li-leads' && method === 'PUT') {
         const body = await request.json();
         if (!body.id) return jsonResp({ error: 'id required' }, 400, request);
