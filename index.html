@@ -310,6 +310,38 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 </style>
 </head>
 <body>
+
+<!-- LOGIN OVERLAY -->
+<div id="login-overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.95);display:flex;align-items:center;justify-content:center;">
+  <div style="width:380px;max-width:92vw;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:36px;letter-spacing:3px;color:#F44302;">TACTIK</div>
+      <div style="font-size:12px;color:#555;font-family:'JetBrains Mono',monospace;letter-spacing:.1em;margin-top:2px;">Sales CRM</div>
+    </div>
+    <div id="login-box" style="background:#0d0d0d;border:1px solid #2a2a2a;border-radius:12px;padding:24px;">
+      <div style="font-size:14px;font-weight:500;margin-bottom:16px;color:#fff;">Sign in</div>
+      <div id="login-error" style="display:none;background:rgba(255,82,82,.12);color:#ef4444;font-size:12px;padding:8px 12px;border-radius:6px;margin-bottom:12px;"></div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#555;font-weight:500;margin-bottom:5px;">Username</div>
+        <input id="login-user" class="fi" placeholder="admin" style="width:100%;" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#555;font-weight:500;margin-bottom:5px;">Password</div>
+        <input id="login-pass" type="password" class="fi" placeholder="••••••" style="width:100%;" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button id="login-btn" class="btn btn-pr" style="width:100%;justify-content:center;padding:10px;" onclick="doLogin()">Sign in</button>
+      <div id="login-setup" style="display:none;margin-top:12px;">
+        <div style="font-size:11px;color:#555;text-align:center;">First time? Create admin account:</div>
+        <div style="margin-top:8px;">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#555;font-weight:500;margin-bottom:5px;">New password</div>
+          <input id="setup-pass" type="password" class="fi" placeholder="Min 4 characters" style="width:100%;">
+        </div>
+        <button class="btn btn-pr" style="width:100%;justify-content:center;padding:10px;margin-top:8px;" onclick="doSetup()">Create account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
 <!-- SIDEBAR -->
@@ -971,37 +1003,11 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   </div>
 </div>
 
-<!-- SETTINGS PANEL -->
-<div class="sp" id="sp">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
-    <div style="font-size:20px;font-family:var(--hd);letter-spacing:1px;">DATABASE SETUP</div>
-    <button class="mo-close" onclick="closeSP()">✕</button>
-  </div>
 
-  <div id="sp-setup">
-    <div style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:18px;">Connect Supabase for real-time sync across all devices. Free forever for your team size.</div>
-    <div class="sstep"><div class="snum">1</div><div class="stxt"><strong>Project URL</strong> — from Supabase → Project Settings → API</div></div>
-    <div class="fl"><input class="fi" id="sb-url" placeholder="https://xxxx.supabase.co"></div>
-    <div class="sstep"><div class="snum">2</div><div class="stxt"><strong>Anon public key</strong> — from the same API page</div></div>
-    <div class="fl"><input class="fi" id="sb-key" placeholder="eyJhbGc..."></div>
-    <button class="btn btn-pr" style="width:100%;justify-content:center;margin-top:8px;" onclick="connectSupabase()">Connect &amp; Test</button>
-  </div>
-
-  <div id="sp-connected" style="display:none;">
-    <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:10px;">
-      <span style="color:var(--gr);font-size:18px;">✓</span>
-      <div><div style="font-size:13px;font-weight:600;color:var(--gr);">Database connected</div><div style="font-size:12px;color:var(--t2);" id="sp-project-url"></div></div>
-    </div>
-    <button class="btn btn-gh" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="manualSync()">↻ Pull latest data</button>
-    <button class="btn btn-pr" style="width:100%;justify-content:center;margin-bottom:8px;" onclick="pushAllToSupabase()">⬆ Push all local data to cloud</button>
-    <button class="btn btn-gh" style="width:100%;justify-content:center;font-size:12px;color:var(--rd);border-color:rgba(239,68,68,.3);margin-top:4px;" onclick="disconnectSupabase()">Disconnect</button>
-  </div>
-</div>
 
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 // ─── SEED DATA ────────────────────────────────────────────────────────────────
 const SEED_DEALS = [{"id": "d_0_0", "company": "Pay Lion", "contact": "Steven Anthony", "phone": "", "email": "", "value": 2000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 40, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "2026-03-26", "followUpNum": 1, "dateClosed": "2026-02-04", "daysToClose": 34, "daysToFollowUp": 84, "nextAction": "Follow up", "nextActionDate": "2026-03-26", "closeDate": "2026-02-04", "notes": "Been following up since June 2025! Wasted alot of time following up- Owner is always on the tools and too busy to deal with this- Multipe office mangers have gone and left", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_1_1", "company": "Precise Metal Workers", "contact": "Rayen Emmanuel", "phone": "", "email": "", "value": 1500.0, "stage": "Proposal Sent", "enquiryType": "Website Design", "source": "Referral", "outcome": "No Response", "prob": 40, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-16", "followUpDate": "2026-04-02", "followUpNum": 1, "dateClosed": "2026-03-17", "daysToClose": 29, "daysToFollowUp": 45, "nextAction": "Follow up", "nextActionDate": "2026-04-02", "closeDate": "2026-03-17", "notes": "had a meeting with the client- sent out email - no reply", "callLog": [], "createdAt": "2026-02-16", "updatedAt": "2026-02-16"}, {"id": "d_2_2", "company": "Luminous Skylights", "contact": "Alex Vidal", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-01-17", "followUpDate": "2026-03-02", "followUpNum": 0, "dateClosed": "2025-02-02", "daysToClose": 16, "daysToFollowUp": 409, "nextAction": "Follow up", "nextActionDate": "2026-03-02", "closeDate": "2025-02-02", "notes": "Said he has another marketing agency- Wont be loking into this for a while", "callLog": [], "createdAt": "2025-01-17", "updatedAt": "2025-01-17"}, {"id": "d_3_3", "company": "BNB Autohouse", "contact": "Josh Batson", "phone": "", "email": "", "value": 5000, "stage": "Negotiation", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Lost", "brand": "Tactik", "owner": "Udara", "prob": 0, "nextAction": "Follow up", "nextActionDate": "2026-04-21", "closeDate": "2026-01-06", "dateContacted": "2025-10-06", "dateClosed": "2026-01-06", "daysToClose": 92, "followUpNum": 1, "notes": "Always overseas and on the move", "callLog": [{"id": "cl_1776139439427", "date": "2026-04-14", "time": "02:03 pm", "rep": "Udara", "type": "Call", "note": "Called no answer- sent out email regarding catchup"}], "createdAt": "2025-10-06", "updatedAt": "2026-04-14"}, {"id": "d_4_4", "company": "Bfinance", "contact": "Josh bohmer", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-29", "followUpDate": "2026-01-18", "followUpNum": 0, "dateClosed": "2026-02-12", "daysToClose": 14, "daysToFollowUp": -11, "nextAction": "Follow up", "nextActionDate": "2026-01-18", "closeDate": "2026-02-12", "notes": "Waste of time- wanted us to do social media manangment so he can get his youtube channel going", "callLog": [], "createdAt": "2026-01-29", "updatedAt": "2026-01-29"}, {"id": "d_5_5", "company": "car rental", "contact": "Nawid safar", "phone": "", "email": "", "value": 1000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-06-05", "followUpDate": "2026-01-29", "followUpNum": 0, "dateClosed": "2026-02-13", "daysToClose": 253, "daysToFollowUp": 238, "nextAction": "Follow up", "nextActionDate": "2026-01-29", "closeDate": "2026-02-13", "notes": "Waste of time- had no budgests - seemed like a dodgy buisness", "callLog": [], "createdAt": "2025-06-05", "updatedAt": "2025-06-05"}, {"id": "d_6_6", "company": "Independent roofers australia", "contact": "Mick Downey", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-09-04", "followUpDate": "", "followUpNum": 0, "dateClosed": "2025-10-06", "daysToClose": 32, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2025-10-06", "notes": "Wasted time- developer who did the project took on marketing", "callLog": [], "createdAt": "2025-09-04", "updatedAt": "2025-09-04"}, {"id": "d_7_7", "company": "Elite Weld", "contact": "Marty", "phone": "", "email": "", "value": 7000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-16", "followUpDate": "", "followUpNum": 0, "dateClosed": "2026-02-27", "daysToClose": 11, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2026-02-27", "notes": "Went cold no response after i thought he was keen on the phone", "callLog": [], "createdAt": "2026-02-16", "updatedAt": "2026-02-16"}, {"id": "d_8_8", "company": "LXD buisness Centre", "contact": "Daniel", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2024-11-19", "followUpDate": "2026-02-20", "followUpNum": 0, "dateClosed": "2026-01-19", "daysToClose": 426, "daysToFollowUp": 458, "nextAction": "Follow up", "nextActionDate": "2026-02-20", "closeDate": "2026-01-19", "notes": "Keeps calcening meetings - pitched him multiple times - tryng to use other overseas options-", "callLog": [], "createdAt": "2024-11-19", "updatedAt": "2024-11-19"}, {"id": "d_9_9", "company": "Fully Promted", "contact": "Arun", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-10-15", "followUpDate": "2026-03-02", "followUpNum": 0, "dateClosed": "2026-01-05", "daysToClose": 82, "daysToFollowUp": 138, "nextAction": "Follow up", "nextActionDate": "2026-03-02", "closeDate": "2026-01-05", "notes": "Dosent trust that FB ads will work- keeps delying the process even after we dropped our price", "callLog": [], "createdAt": "2025-10-15", "updatedAt": "2025-10-15"}, {"id": "d_10_10", "company": "Xtord Designs", "contact": "Himanshu", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-27", "followUpDate": "2026-01-29", "followUpNum": 0, "dateClosed": "2026-02-27", "daysToClose": 31, "daysToFollowUp": 2, "nextAction": "Follow up", "nextActionDate": "2026-01-29", "closeDate": "2026-02-27", "notes": "Waste of time- was only wanting to chat as they were in early stages of buisness", "callLog": [], "createdAt": "2026-01-27", "updatedAt": "2026-01-27"}, {"id": "d_11_11", "company": "RAS-OHS", "contact": "Dhawal Patel", "phone": "", "email": "", "value": 1500.0, "stage": "On Hold", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Pending", "prob": 20, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-06-26", "followUpDate": "2026-02-04", "followUpNum": 0, "dateClosed": "2026-01-29", "daysToClose": 217, "daysToFollowUp": 223, "nextAction": "Follow up", "nextActionDate": "2026-02-04", "closeDate": "2026-01-29", "notes": "Client was doing this by him self and seeing great results- one man buisness was still starting up at the time", "callLog": [], "createdAt": "2025-06-26", "updatedAt": "2025-06-26"}, {"id": "d_12_12", "company": "pinkladoo", "contact": "Nimish", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-06-30", "followUpDate": "2026-01-18", "followUpNum": 0, "dateClosed": "2026-01-18", "daysToClose": 202, "daysToFollowUp": 202, "nextAction": "Follow up", "nextActionDate": "2026-01-18", "closeDate": "2026-01-18", "notes": "Too busy to take on more work- Ecom buisness is doing well - sesonal products also", "callLog": [], "createdAt": "2025-06-30", "updatedAt": "2025-06-30"}, {"id": "d_13_13", "company": "Wyllie Electrical Solutions", "contact": "Andre Wyllie -  Maz", "phone": "", "email": "", "value": 1500.0, "stage": "Qualified", "enquiryType": "Social Media Management", "source": "Networking", "outcome": "Pending", "prob": 30, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-07-14", "followUpDate": "2026-01-27", "followUpNum": 0, "dateClosed": "2026-01-27", "daysToClose": 197, "daysToFollowUp": 197, "nextAction": "Follow up", "nextActionDate": "2026-01-27", "closeDate": "2026-01-27", "notes": "Was keen but we failed to send out Pitch deck- said he will look into things in the future", "callLog": [], "createdAt": "2025-07-14", "updatedAt": "2025-07-14"}, {"id": "d_14_14", "company": "FREAKKUENCY", "contact": "Jorjee Jan", "phone": "", "email": "", "value": 2000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-07-21", "followUpDate": "2026-01-28", "followUpNum": 0, "dateClosed": "2026-01-28", "daysToClose": 191, "daysToFollowUp": 191, "nextAction": "Follow up", "nextActionDate": "2026-01-28", "closeDate": "2026-01-28", "notes": "Refferal that went MIA- had no phone number for client only email", "callLog": [], "createdAt": "2025-07-21", "updatedAt": "2025-07-21"}, {"id": "d_15_15", "company": "Finance land", "contact": "MK", "phone": "", "email": "", "value": 10000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-07-30", "followUpDate": "2026-02-08", "followUpNum": 0, "dateClosed": "2026-02-08", "daysToClose": 193, "daysToFollowUp": 193, "nextAction": "Follow up", "nextActionDate": "2026-02-08", "closeDate": "2026-02-08", "notes": "Waste of time- too many bisness partners inovovled- we wasted alot of time designing home page for MK as well", "callLog": [], "createdAt": "2025-07-30", "updatedAt": "2025-07-30"}, {"id": "d_16_16", "company": "PMA", "contact": "Dush", "phone": "", "email": "", "value": 10000.0, "stage": "Qualified", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "prob": 30, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-07-30", "followUpDate": "2026-01-30", "followUpNum": 0, "dateClosed": "2026-01-30", "daysToClose": 184, "daysToFollowUp": 184, "nextAction": "Follow up", "nextActionDate": "2026-01-30", "closeDate": "2026-01-30", "notes": "Hard to get through to buisness owners- alot of pepople we need to get past- still need to finliase video and send it out", "callLog": [], "createdAt": "2025-07-30", "updatedAt": "2025-07-30"}, {"id": "d_17_17", "company": "Jay and Co Lawyers", "contact": "Esan Pilai", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Friends or Family", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-07-30", "followUpDate": "2026-02-03", "followUpNum": 0, "dateClosed": "2026-02-03", "daysToClose": 188, "daysToFollowUp": 188, "nextAction": "Follow up", "nextActionDate": "2026-02-03", "closeDate": "2026-02-03", "notes": "Jay got sick and is shutting down the buisness", "callLog": [], "createdAt": "2025-07-30", "updatedAt": "2025-07-30"}, {"id": "d_18_18", "company": "Nest Finance", "contact": "Heather Andrews", "phone": "", "email": "", "value": 3000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-08-08", "followUpDate": "2026-01-18", "followUpNum": 0, "dateClosed": "2026-01-18", "daysToClose": 163, "daysToFollowUp": 163, "nextAction": "Follow up", "nextActionDate": "2026-01-18", "closeDate": "2026-01-18", "notes": "Big trust issue with client- she has been burt before- weasted time dont think she has budgets either", "callLog": [], "createdAt": "2025-08-08", "updatedAt": "2025-08-08"}, {"id": "d_19_19", "company": "Nu Skin", "contact": "Tran", "phone": "", "email": "", "value": 10000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-08-11", "followUpDate": "2026-01-20", "followUpNum": 0, "dateClosed": "2026-01-20", "daysToClose": 162, "daysToFollowUp": 162, "nextAction": "Follow up", "nextActionDate": "2026-01-20", "closeDate": "2026-01-20", "notes": "Waste of time- was all talk- never had budgets to start with- had no idea about what she was doing sounded like a prymid scheeme buisness", "callLog": [], "createdAt": "2025-08-11", "updatedAt": "2025-08-11"}, {"id": "d_20_20", "company": "Bivcorp", "contact": "Christan b", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-08-20", "followUpDate": "2026-01-27", "followUpNum": 0, "dateClosed": "2026-01-27", "daysToClose": 160, "daysToFollowUp": 160, "nextAction": "Follow up", "nextActionDate": "2026-01-27", "closeDate": "2026-01-27", "notes": "Using current agency and is seeing great results", "callLog": [], "createdAt": "2025-08-20", "updatedAt": "2025-08-20"}, {"id": "d_21_21", "company": "Sydney Commerical", "contact": "Anthony Rahme", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-10-13", "followUpDate": "2026-02-04", "followUpNum": 0, "dateClosed": "2026-02-04", "daysToClose": 114, "daysToFollowUp": 114, "nextAction": "Follow up", "nextActionDate": "2026-02-04", "closeDate": "2026-02-04", "notes": "Said he is taking marketing in house after mulitple meetings", "callLog": [], "createdAt": "2025-10-13", "updatedAt": "2025-10-13"}, {"id": "d_22_22", "company": "Grand pools", "contact": "Lachie", "phone": "", "email": "", "value": 20000.0, "stage": "Negotiation", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "prob": 75, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-10-13", "followUpDate": "2026-02-09", "followUpNum": 0, "dateClosed": "2026-02-09", "daysToClose": 119, "daysToFollowUp": 119, "nextAction": "Follow up", "nextActionDate": "2026-02-09", "closeDate": "2026-02-09", "notes": "Fighting a case with our laweyers to sue other agency he has worked with", "callLog": [], "createdAt": "2025-10-13", "updatedAt": "2025-10-13"}, {"id": "d_23_23", "company": "Optium Air", "contact": "Khayen", "phone": "", "email": "", "value": 2000, "stage": "Final Follow Up", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 60, "nextAction": "Follow up", "nextActionDate": "2026-04-17", "closeDate": "2025-11-13", "dateContacted": "2025-10-13", "dateClosed": "2025-11-13", "daysToClose": 31, "followUpNum": 1, "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_23_0", "date": "2025-10-13", "rep": "Udara", "type": "Call", "note": "left vm no answer"}, {"id": "cl_1776143391848", "date": "2026-04-14", "time": "03:09 pm", "rep": "Udara", "type": "Call", "note": "Left VM no answer"}], "createdAt": "2025-10-13", "updatedAt": "2026-04-14"}, {"id": "d_24_24", "company": "Baisdenloans", "contact": "Chris", "phone": "", "email": "", "value": 10000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-10-13", "followUpDate": "", "followUpNum": 0, "dateClosed": "2025-11-24", "daysToClose": 42, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2025-11-24", "notes": "Got mad i kept calling as his website is bad- said he has someone else looking into it... website is still bad", "callLog": [], "createdAt": "2025-10-13", "updatedAt": "2025-10-13"}, {"id": "d_25_25", "company": "Swift Signs", "contact": "Nadir", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-10-16", "followUpDate": "2026-01-18", "followUpNum": 0, "dateClosed": "2026-01-18", "daysToClose": 94, "daysToFollowUp": 94, "nextAction": "Follow up", "nextActionDate": "2026-01-18", "closeDate": "2026-01-18", "notes": "contact said he is leaving the company- old school owners stuck in their ways", "callLog": [], "createdAt": "2025-10-16", "updatedAt": "2025-10-16"}, {"id": "d_26_26", "company": "Built in concrete and renos", "contact": "Wasim", "phone": "", "email": "", "value": 6000, "stage": "Final Follow Up", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 60, "nextAction": "Follow up", "nextActionDate": "2026-04-21", "closeDate": "2026-03-31", "dateContacted": "2025-10-16", "dateClosed": "2026-03-31", "daysToClose": 166, "followUpNum": 1, "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_26_0", "date": "2025-10-16", "rep": "Udara", "type": "Call", "note": "wasim- Flat out wants to get this done"}, {"id": "cl_1776143360063", "date": "2026-04-14", "time": "03:09 pm", "rep": "Udara", "type": "Call", "note": "Spoke to wasim - quoted him 2k for a 5 page site, 1k marketing, said he will speak to his dad again and get back to me ASAP"}], "createdAt": "2025-10-16", "updatedAt": "2026-04-14"}, {"id": "d_27_27", "company": "Sovereignair", "contact": "Chathura", "phone": "", "email": "", "value": 1500, "stage": "Final Follow Up", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 60, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2025-11-20", "dateContacted": "2025-11-06", "dateClosed": "2025-11-20", "daysToClose": 14, "followUpNum": 1, "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_27_0", "date": "2025-11-06", "rep": "Udara", "type": "Call", "note": "aircondition servicing- said to call back in 3 weeks"}, {"id": "cl_1776143294336", "date": "2026-04-14", "time": "03:08 pm", "rep": "Udara", "type": "Call", "note": "said to call back in 3 weeks as his cashflow issues at the moment"}], "createdAt": "2025-11-06", "updatedAt": "2026-04-14"}, {"id": "d_28_28", "company": "Apple Green Landscaping", "contact": "Sumith", "phone": "0450882713", "email": "caseypropertyservice@hotmail.com", "value": 3000, "stage": "Final Follow Up", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 60, "nextAction": "Follow up", "nextActionDate": "2026-04-16", "closeDate": "2026-01-18", "dateContacted": "2025-11-25", "dateClosed": "2026-01-18", "daysToClose": 54, "followUpNum": 1, "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_1776143570207", "date": "2026-04-14", "time": "03:12 pm", "rep": "Udara", "type": "Call", "note": "Spoke to the owner, quoted him 3k for build of landing page"}], "createdAt": "2025-11-25", "updatedAt": "2026-04-14"}, {"id": "d_29_29", "company": "Ambula", "contact": "Dian", "phone": "", "email": "", "value": 3000, "stage": "Final Follow Up", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 60, "nextAction": "Follow up", "nextActionDate": "2026-02-02", "closeDate": "2026-01-27", "dateContacted": "2025-11-26", "dateClosed": "2026-01-27", "daysToClose": 62, "followUpNum": 1, "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_29_0", "date": "2025-11-26", "rep": "Udara", "type": "Call", "note": "Call back next monday"}, {"id": "cl_1776143603015", "date": "2026-04-14", "time": "03:13 pm", "rep": "Udara", "type": "Call", "note": "Called Dian - said to call him next monday"}], "createdAt": "2025-11-26", "updatedAt": "2026-04-14"}, {"id": "d_30_30", "company": "ADR Modifications", "contact": "Sam", "phone": "", "email": "", "value": 4000.0, "stage": "Final Follow Up", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Pending", "prob": 60, "brand": "Tactik", "owner": "Udara", "dateContacted": "2025-11-26", "followUpDate": "2026-02-02", "followUpNum": 0, "dateClosed": "2026-02-02", "daysToClose": 68, "daysToFollowUp": 68, "nextAction": "Follow up", "nextActionDate": "2026-02-02", "closeDate": "2026-02-02", "notes": "had a meeting with the client- sent out email - no reply", "callLog": [], "createdAt": "2025-11-26", "updatedAt": "2025-11-26"}, {"id": "d_31_31", "company": "Little Bang Espresso", "contact": "Nich Deangelo", "phone": "", "email": "", "value": 2000.0, "stage": "Final Follow Up", "enquiryType": "Marketing Strategy", "source": "Networking", "outcome": "Pending", "prob": 60, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-19", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-19", "daysToClose": 31, "daysToFollowUp": 804, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-19", "notes": "had a meeting with the client- sent out email - no reply", "callLog": [], "createdAt": "2026-01-19", "updatedAt": "2026-01-19"}, {"id": "d_32_32", "company": "Prime Phase power", "contact": "Dano", "phone": "", "email": "", "value": 2000.0, "stage": "Final Follow Up", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "prob": 60, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-19", "followUpDate": "2026-03-23", "followUpNum": 0, "dateClosed": "2026-03-23", "daysToClose": 63, "daysToFollowUp": 63, "nextAction": "Follow up", "nextActionDate": "2026-03-23", "closeDate": "2026-03-23", "notes": "had a meeting with the client- sent out email - no reply", "callLog": [{"id": "cl_32_0", "date": "2026-01-19", "rep": "Udara", "type": "Call", "note": "Cant afford it getting married"}], "createdAt": "2026-01-19", "updatedAt": "2026-01-19"}, {"id": "d_33_33", "company": "Melbourne Superior Tiling", "contact": "Alex", "phone": "", "email": "", "value": 1000.0, "stage": "Lost", "enquiryType": "SEO", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-20", "followUpDate": "2026-01-23", "followUpNum": 0, "dateClosed": "2026-01-23", "daysToClose": 3, "daysToFollowUp": 3, "nextAction": "Follow up", "nextActionDate": "2026-01-23", "closeDate": "2026-01-23", "notes": "Budgets are small one man opperator wanting full marketing for under 1k", "callLog": [], "createdAt": "2026-01-20", "updatedAt": "2026-01-20"}, {"id": "d_34_34", "company": "M tech automotive", "contact": "Fadel", "phone": "", "email": "", "value": 3000.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-20", "followUpDate": "2026-01-28", "followUpNum": 0, "dateClosed": "2026-01-28", "daysToClose": 8, "daysToFollowUp": 8, "nextAction": "Follow up", "nextActionDate": "2026-01-28", "closeDate": "2026-01-28", "notes": "Did not show up to meeting - no follow up after", "callLog": [], "createdAt": "2026-01-20", "updatedAt": "2026-01-20"}, {"id": "d_35_35", "company": "Top Edge Tiling", "contact": "Emanuel", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-20", "followUpDate": "2026-02-23", "followUpNum": 0, "dateClosed": "2026-02-23", "daysToClose": 34, "daysToFollowUp": 34, "nextAction": "Follow up", "nextActionDate": "2026-02-23", "closeDate": "2026-02-23", "notes": "said he was not intrested in the first call", "callLog": [], "createdAt": "2026-01-20", "updatedAt": "2026-01-20"}, {"id": "d_36_36", "company": "obseridan wealth", "contact": "Thaveesh", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-20", "followUpDate": "", "followUpNum": 0, "dateClosed": "2026-02-10", "daysToClose": 21, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2026-02-10", "notes": "Using another agency- offer is not marketable- dont bother", "callLog": [], "createdAt": "2026-01-20", "updatedAt": "2026-01-20"}, {"id": "d_37_37", "company": "Perfect Auto care", "contact": "Anil", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-22", "followUpDate": "2026-02-08", "followUpNum": 0, "dateClosed": "2026-02-08", "daysToClose": 17, "daysToFollowUp": 17, "nextAction": "Follow up", "nextActionDate": "2026-02-08", "closeDate": "2026-02-08", "notes": "said website is not important for him after multiple catchups- as he has booked out allready for weeks", "callLog": [], "createdAt": "2026-01-22", "updatedAt": "2026-01-22"}, {"id": "d_38_38", "company": "Mechanical Car Repairs", "contact": "Kay", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-22", "followUpDate": "2026-01-21", "followUpNum": 0, "dateClosed": "2026-01-21", "daysToClose": -1, "daysToFollowUp": -1, "nextAction": "Follow up", "nextActionDate": "2026-01-21", "closeDate": "2026-01-21", "notes": "Sent out quote- No reply from client after", "callLog": [], "createdAt": "2026-01-22", "updatedAt": "2026-01-22"}, {"id": "d_39_39", "company": "Cordina's Mechanical & 4x4", "contact": "Jason", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-22", "followUpDate": "2026-01-22", "followUpNum": 0, "dateClosed": "2026-01-22", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "2026-01-22", "closeDate": "2026-01-22", "notes": "Cant afford a website - said to call back in a years time", "callLog": [], "createdAt": "2026-01-22", "updatedAt": "2026-01-22"}, {"id": "d_40_40", "company": "NaT", "contact": "NaT", "phone": "", "email": "", "value": 0, "stage": "Lead", "enquiryType": "NaT", "source": "NaT", "outcome": "Pending", "prob": 10, "brand": "NaT", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "NaT", "callLog": [{"id": "cl_40_0", "date": "2026-01-01", "rep": "Udara", "type": "Call", "note": "NaT"}], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_41_41", "company": "Kimberly shade", "contact": "Clint", "phone": "", "email": "", "value": 4000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-22", "followUpDate": "2026-02-02", "followUpNum": 0, "dateClosed": "2026-02-02", "daysToClose": 11, "daysToFollowUp": 11, "nextAction": "Follow up", "nextActionDate": "2026-02-02", "closeDate": "2026-02-02", "notes": "Word of mouth is the main source of leads- said he is booked out and cant take on more work -so website is not important", "callLog": [], "createdAt": "2026-01-22", "updatedAt": "2026-01-22"}, {"id": "d_42_42", "company": "Kununurra 4WD Spares", "contact": "Dustin", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-22", "followUpDate": "2026-01-28", "followUpNum": 0, "dateClosed": "2026-01-28", "daysToClose": 6, "daysToFollowUp": 6, "nextAction": "Follow up", "nextActionDate": "2026-01-28", "closeDate": "2026-01-28", "notes": "Said they are not ready for website- call back in a year", "callLog": [], "createdAt": "2026-01-22", "updatedAt": "2026-01-22"}, {"id": "d_43_43", "company": "EXM Diesel&Hydraulic", "contact": "Lofty + bec", "phone": "", "email": "", "value": 3000, "stage": "Qualified", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 30, "nextAction": "Follow up", "nextActionDate": "2026-04-16", "closeDate": "2026-02-18", "dateContacted": "2026-02-02", "dateClosed": "2026-02-18", "daysToClose": 16, "followUpNum": 1, "notes": "Spoke to wife who was interstate- said to call back after easter", "callLog": [{"id": "cl_43_0", "date": "2026-02-02", "rep": "Udara", "type": "Call", "note": "left VM no answer"}, {"id": "cl_1776137963159", "date": "2026-04-14", "time": "01:39 pm", "rep": "Udara", "type": "Call", "note": "left vm no answer"}], "createdAt": "2026-02-02", "updatedAt": "2026-04-14"}, {"id": "d_44_44", "company": "Perth Auto Care", "contact": "Karamjeet", "phone": "", "email": "", "value": 3000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-02", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 16, "daysToFollowUp": 16, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "said website is not important for him after multiple catchups- as he has booked out allready for weeks", "callLog": [], "createdAt": "2026-02-02", "updatedAt": "2026-02-02"}, {"id": "d_45_45", "company": "Eco shine cleaners", "contact": "Karan", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-03", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 15, "daysToFollowUp": 15, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "Been burnt so many time - does not belive any agency out there", "callLog": [], "createdAt": "2026-02-03", "updatedAt": "2026-02-03"}, {"id": "d_46_46", "company": "Plumbing bros", "contact": "Khal", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-05", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 13, "daysToFollowUp": 13, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "said he needs to wait for a few months - as the franchaise is using internal marketing for launch", "callLog": [], "createdAt": "2026-02-05", "updatedAt": "2026-02-05"}, {"id": "d_47_47", "company": "Atlas Parnters", "contact": "Craig", "phone": "", "email": "", "value": 16500.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-06", "followUpDate": "2026-02-10", "followUpNum": 0, "dateClosed": "2026-02-10", "daysToClose": 4, "daysToFollowUp": 4, "nextAction": "Follow up", "nextActionDate": "2026-02-10", "closeDate": "2026-02-10", "notes": "Said buget is too low+ external party using other company", "callLog": [], "createdAt": "2026-02-06", "updatedAt": "2026-02-06"}, {"id": "d_48_48", "company": "Ab's Bakery", "contact": "Jamie", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-10", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 8, "daysToFollowUp": 8, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "waste of time- kept ghosting meetings", "callLog": [], "createdAt": "2026-02-10", "updatedAt": "2026-02-10"}, {"id": "d_49_49", "company": "U Beaute trailers", "contact": "James", "phone": "", "email": "", "value": 3000.0, "stage": "Lost", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-10", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 8, "daysToFollowUp": 8, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "Said his web dev is looking after it and wants to stay with him", "callLog": [], "createdAt": "2026-02-10", "updatedAt": "2026-02-10"}, {"id": "d_50_50", "company": "Quality custom trailer", "contact": "Priya", "phone": "", "email": "", "value": 3000.0, "stage": "Proposal Sent", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "No Response", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-10", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 8, "daysToFollowUp": 1147, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-18", "notes": "No response yet- sent out email waiting for a reply- need to follow up again via call", "callLog": [], "createdAt": "2026-02-10", "updatedAt": "2026-02-10"}, {"id": "d_51_51", "company": "Pappas Trailers", "contact": "Mitchelle", "phone": "", "email": "", "value": 3000.0, "stage": "Proposal Sent", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "No Response", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-10", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 8, "daysToFollowUp": 1512, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-18", "notes": "No response yet- sent out email waiting for a reply- need to follow up again via call", "callLog": [], "createdAt": "2026-02-10", "updatedAt": "2026-02-10"}, {"id": "d_52_52", "company": "glintzcleaning.com.au", "contact": "Widusha", "phone": "", "email": "", "value": 1500.0, "stage": "Proposal Sent", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "No Response", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-11", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-19", "daysToClose": 8, "daysToFollowUp": 1876, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-19", "notes": "No response yet- sent out email waiting for a reply- need to follow up again via call", "callLog": [], "createdAt": "2026-02-11", "updatedAt": "2026-02-11"}, {"id": "d_53_53", "company": "thecarguysgarageofficial", "contact": "Dilshan", "phone": "", "email": "", "value": 1500.0, "stage": "Proposal Sent", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "No Response", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-12", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-20", "daysToClose": 8, "daysToFollowUp": 2241, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-20", "notes": "No response yet- sent out email waiting for a reply- need to follow up again via call", "callLog": [], "createdAt": "2026-02-12", "updatedAt": "2026-02-12"}, {"id": "d_54_54", "company": "Mick Pressure Washing", "contact": "Mick", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-12", "followUpDate": "2026-02-18", "followUpNum": 0, "dateClosed": "2026-02-18", "daysToClose": 6, "daysToFollowUp": 6, "nextAction": "Follow up", "nextActionDate": "2026-02-18", "closeDate": "2026-02-18", "notes": "No answer- bad refferal - could not get through to the client", "callLog": [], "createdAt": "2026-02-12", "updatedAt": "2026-02-12"}, {"id": "d_55_55", "company": "Low Doc loans", "contact": "John", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-03-05", "followUpNum": 0, "dateClosed": "2026-03-05", "daysToClose": 16, "daysToFollowUp": 16, "nextAction": "Follow up", "nextActionDate": "2026-03-05", "closeDate": "2026-03-05", "notes": "Cancled meetng- never followed up", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_56_56", "company": "Forster Finiancal", "contact": "Nadik", "phone": "", "email": "", "value": 1500.0, "stage": "Proposal Sent", "enquiryType": "Meta / Facebook Ads", "source": "Friends or Family", "outcome": "No Response", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-02-23", "daysToClose": 6, "daysToFollowUp": 2601, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-02-23", "notes": "Sent out proprosal - no answer to follow up", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_57_57", "company": "Camden Capital", "contact": "Alex", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Friends or Family", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-02-19", "followUpNum": 0, "dateClosed": "2026-02-19", "daysToClose": 2, "daysToFollowUp": 2, "nextAction": "Follow up", "nextActionDate": "2026-02-19", "closeDate": "2026-02-19", "notes": "Went MIA- tried to contact multiple times after good phone call", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_58_58", "company": "National Property Consultant", "contact": "Amit", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-02-19", "followUpNum": 0, "dateClosed": "2026-02-19", "daysToClose": 2, "daysToFollowUp": 2, "nextAction": "Follow up", "nextActionDate": "2026-02-19", "closeDate": "2026-02-19", "notes": "Went with another firm as they specalise in brokers", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_59_59", "company": "Matrix Media Walls", "contact": "Taran", "phone": "", "email": "", "value": 1500.0, "stage": "Final Follow Up", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "No Response", "prob": 60, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-03-23", "daysToClose": 34, "daysToFollowUp": 2966, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-03-23", "notes": "Keeps pushing out timelines of when he can start as his always on the job", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_60_60", "company": "YTM Group - Finance", "contact": "Akbar", "phone": "", "email": "", "value": 1500.0, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-02-17", "followUpDate": "2026-02-19", "followUpNum": 0, "dateClosed": "2026-02-19", "daysToClose": 2, "daysToFollowUp": 2, "nextAction": "Follow up", "nextActionDate": "2026-02-19", "closeDate": "2026-02-19", "notes": "Won deal - Naman showacsed the case study and talked about marketing and what it can do for YTM group.", "callLog": [], "createdAt": "2026-02-17", "updatedAt": "2026-02-17"}, {"id": "d_61_61", "company": "Early Cost Advisory", "contact": "Jack", "phone": "", "email": "", "value": 4500.0, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-18", "followUpDate": "", "followUpNum": 0, "dateClosed": "2026-03-27", "daysToClose": 37, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2026-03-27", "notes": "Won deal", "callLog": [], "createdAt": "2026-02-18", "updatedAt": "2026-02-18"}, {"id": "d_62_62", "company": "Frater Exterior Cleaning - Canada", "contact": "Jamie Frater", "phone": "", "email": "", "value": 1500.0, "stage": "Proposal Sent", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Pending", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-19", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "2026-03-12", "daysToClose": 21, "daysToFollowUp": 3329, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "2026-03-12", "notes": "Sent out proprosal - no answer after multiple follow ups", "callLog": [], "createdAt": "2026-02-19", "updatedAt": "2026-02-19"}, {"id": "d_63_63", "company": "Early Cost Advisory", "contact": "Jack E", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_64_64", "company": "Nurtured Spark", "contact": "Bill", "phone": "", "email": "", "value": 4000.0, "stage": "Won", "enquiryType": "Website Design", "source": "Networking", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_65_65", "company": "Pm Finance", "contact": "Pat", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_66_66", "company": "KMS", "contact": "Steve E", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_67_67", "company": "Onix", "contact": "Aron", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_68_68", "company": "Naara Charcole", "contact": "Allen", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_69_69", "company": "Safe choice plumbing", "contact": "Jack D", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_70_70", "company": "Falven 3d", "contact": "Ali", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_71_71", "company": "Plunket Media", "contact": "Ben", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_72_72", "company": "Orignial Plumbing", "contact": "Mustafa", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_73_73", "company": "Kor Equilbre", "contact": "Elle Mother in law", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_74_74", "company": "DWS", "contact": "", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Other", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_75_75", "company": "No.64 Apparel", "contact": "Josh", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_76_76", "company": "Milana", "contact": "Nick", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Networking", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_77_77", "company": "Positive Solar and Battries", "contact": "Devon", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_78_78", "company": "Kedalup Energy", "contact": "", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_79_79", "company": "Soko", "contact": "Kevin", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_80_80", "company": "Rep movement", "contact": "", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Cold Call", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_81_81", "company": "441 Coffe", "contact": "Kyle", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_82_82", "company": "JLW", "contact": "Brett", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_83_83", "company": "Convergence/Finbeat/Nexus", "contact": "Ben", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_84_84", "company": "Lovell Air", "contact": "Sean", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_85_85", "company": "HAT", "contact": "Lydia", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_86_86", "company": "Ikigia", "contact": "Andrew", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_87_87", "company": "Motorcrop Solutions", "contact": "Josh", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_88_88", "company": "CCS", "contact": "Akila", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_89_89", "company": "Bravo", "contact": "Denny", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_90_90", "company": "Baytech", "contact": "David", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Branding", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_91_91", "company": "Mondial", "contact": "Sudesh", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_92_92", "company": "Equitable", "contact": "Hamsa", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_93_93", "company": "CP", "contact": "Mina", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_94_94", "company": "JKS Healing", "contact": "Jason", "phone": "", "email": "", "value": 1500.0, "stage": "Won", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "Unsure what happend with deal - Naman took over", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_95_95", "company": "Ausramp", "contact": "Greg", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_96_96", "company": "KB's", "contact": "Kyle/Santh", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_97_97", "company": "Royce", "contact": "David", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_98_98", "company": "Trik Trailers", "contact": "Karan", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_99_99", "company": "DHF Tyres", "contact": "Dinuka", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_100_100", "company": "CDS", "contact": "Joe", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Referral", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_101_101", "company": "Locionne", "contact": "Michelle", "phone": "", "email": "", "value": NaN, "stage": "Won", "enquiryType": "Website Design + Ads", "source": "Friends or Family", "outcome": "Won", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "", "notes": "", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_102_102", "company": "Your Loan connect", "contact": "Andrew", "phone": "", "email": "", "value": 1500.0, "stage": "Won", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Lost", "prob": 100, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-01-01", "followUpDate": "", "followUpNum": 0, "dateClosed": "2026-03-17", "daysToClose": 0, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2026-03-17", "notes": "Not to sure about lead- they brought in a internal marketing person", "callLog": [], "createdAt": "2026-01-01", "updatedAt": "2026-01-01"}, {"id": "d_103_103", "company": "Brew Coffee Roasters", "contact": "Matt James", "phone": "", "email": "", "value": 1500.0, "stage": "Lost", "enquiryType": "Meta / Facebook Ads", "source": "Networking", "outcome": "Lost", "prob": 0, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-02-25", "followUpDate": "", "followUpNum": 0, "dateClosed": "2026-03-04", "daysToClose": 7, "daysToFollowUp": 0, "nextAction": "Follow up", "nextActionDate": "", "closeDate": "2026-03-04", "notes": "Said his brother wants to stick with someone in the state", "callLog": [], "createdAt": "2026-02-25", "updatedAt": "2026-02-25"}, {"id": "d_104_104", "company": "Cox auto", "contact": "Billy", "phone": "", "email": "", "value": 1500.0, "stage": "Won", "enquiryType": "Google Ads", "source": "Cold Call", "outcome": "Won", "prob": 70, "brand": "Tamed Marketing", "owner": "Udara", "dateContacted": "2026-03-02", "followUpDate": "2026-03-11", "followUpNum": 4, "dateClosed": "2026-04-01", "daysToClose": 30, "daysToFollowUp": 9, "nextAction": "Follow up", "nextActionDate": "2026-03-11", "closeDate": "2026-04-01", "notes": "Won deal, Nams went to the office multiple times to cross reference the other agency work. Highlighted to Billy all the things that they were bullshitting Cox on - they both sent out 2-3 emails to that agency. In the end the deal was won via building of trust and showcasing to the client in lamen terms on what marketing can do for them", "callLog": [], "createdAt": "2026-03-02", "updatedAt": "2026-03-02"}, {"id": "d_105_105", "company": "Nutured spark", "contact": "Billy", "phone": "", "email": "", "value": 4000.0, "stage": "Proposal Sent", "enquiryType": "Website Design", "source": "Networking", "outcome": "Pending", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-04-01", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 3654, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "", "notes": "Sent out proprosal - Billy is checkign with wife to see if its good to go", "callLog": [], "createdAt": "2026-04-01", "updatedAt": "2026-04-01"}, {"id": "d_106_106", "company": "NKSM", "contact": "Mahinda", "phone": "", "email": "", "value": 6000, "stage": "Negotiation", "enquiryType": "Website Design", "source": "Friends or Family", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 75, "nextAction": "Follow up", "nextActionDate": "2026-05-04", "closeDate": "", "dateContacted": "2026-03-17", "dateClosed": "", "daysToClose": 0, "followUpNum": 0, "notes": "", "callLog": [], "createdAt": "2026-03-17", "updatedAt": "2026-04-14"}, {"id": "d_107_107", "company": "CFO on call", "contact": "Margret", "phone": "", "email": "", "value": 14000.0, "stage": "Proposal Sent", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "prob": 55, "brand": "Tactik", "owner": "Udara", "dateContacted": "2026-03-10", "followUpDate": "2026-04-20", "followUpNum": 0, "dateClosed": "", "daysToClose": 0, "daysToFollowUp": 4406, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "", "notes": "Waiting to see when the CEO can come into meet us as they want to meet in person- they are also tossing up other options as well as budget is low and project is big", "callLog": [], "createdAt": "2026-03-10", "updatedAt": "2026-03-10"}, {"id": "d_108_108", "company": "Varees Legal", "contact": "Farid", "phone": "", "email": "", "value": 5000, "stage": "Qualified", "enquiryType": "Website Design", "source": "LinkedIn", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 30, "nextAction": "Follow up", "nextActionDate": "2026-04-20", "closeDate": "", "dateContacted": "2026-04-02", "dateClosed": "", "daysToClose": 0, "followUpNum": 1, "notes": "Sent out email waiting for reply", "callLog": [{"id": "cl_1776137918447", "date": "2026-04-14", "time": "01:38 pm", "rep": "Udara", "type": "Call", "note": "Called left vm+ sent email to director"}], "createdAt": "2026-04-02", "updatedAt": "2026-04-14"}, {"id": "d_109_109", "company": "Fountain Smith Lawyers and Governance", "contact": "Garth", "phone": "", "email": "", "value": 0, "stage": "Lead", "enquiryType": "Website Design", "source": "Referral", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 10, "nextAction": "Follow up", "nextActionDate": "2026-04-16", "closeDate": "", "dateContacted": "2026-04-02", "dateClosed": "", "daysToClose": 0, "followUpNum": 1, "notes": "Tried to get in contact- no answer", "callLog": [{"id": "cl_109_0", "date": "2026-04-02", "rep": "Udara", "type": "Call", "note": "Called left vm+ sent email"}, {"id": "cl_1776138053518", "date": "2026-04-14", "time": "01:40 pm", "rep": "Udara", "type": "Call", "note": "left vm no answer"}], "createdAt": "2026-04-02", "updatedAt": "2026-04-14"}, {"id": "d_1776141735043", "company": "titaniumrecruitment", "contact": "Chanell", "phone": "", "email": "chanell@titaniumrecruitment.com.au", "value": 5000, "stage": "Lead", "enquiryType": "Website Design", "source": "Cold Call", "outcome": "Pending", "brand": "Tactik", "owner": "Udara", "prob": 10, "nextAction": "Wait for reply to email", "nextActionDate": "2026-04-17", "closeDate": "", "dateContacted": "2026-04-14", "dateClosed": "", "daysToClose": 0, "followUpNum": 0, "notes": "", "callLog": [], "createdAt": "2026-04-14", "updatedAt": "2026-04-14"}];
@@ -1010,9 +1016,6 @@ const SEED_DEALS = [{"id": "d_0_0", "company": "Pay Lion", "contact": "Steven An
 let deals=[],acts=[],liLeads=[],editId=null,actFilt='all',csvRows=[],csvHeaders=[];
 let rottenDays={Lead:3,Qualified:5,'Proposal Sent':7,Negotiation:10,Won:0,Lost:0,'On Hold':14,'Final Follow Up':5};
 let revenueChart=null;
-let sbClient=null;
-let sbUrl='https://zznenckytqohusbujqwn.supabase.co';
-let sbKey='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp6bmVuY2t5dHFvaHVzYnVqcXduIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzA0MTEsImV4cCI6MjA5MTc0NjQxMX0.9WRaYUlFrMafVkfJRAxmHxxgr_9lTf-K8NCbaIulGqU';
 let isSyncing=false;
 
 const MONTHLY_TARGET=30000,BREAKEVEN=20000;
@@ -1045,65 +1048,156 @@ async function init(){
   const savedRot=localStorage.getItem('tcrm3_rot');
   if(savedRot)try{rottenDays={...rottenDays,...JSON.parse(savedRot)};}catch(e){}
 
-  // Step 1: Always load seed data first so UI is never empty
-  const sd=localStorage.getItem('tcrm3_d');
-  let localDeals=[];
-  try{localDeals=sd?JSON.parse(sd):[];}catch(e){}
-  deals=localDeals.length>0?localDeals:SEED_DEALS;
-  try{acts=JSON.parse(localStorage.getItem('tcrm3_a')||'[]');}catch(e){acts=[];}
-  try{liLeads=JSON.parse(localStorage.getItem('tcrm3_li')||'[]');}catch(e){liLeads=[];}
-  saveLocal();
-  renderAll();
-  showToast(deals.length+' deals loaded','ok');
-
-  // Step 2: Try Supabase in background
-  sbUrl=localStorage.getItem('sb_url')||sbUrl;
-  sbKey=localStorage.getItem('sb_key')||sbKey;
-  if(!sbUrl||!sbKey)return;
-
+  // Check for auth token
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token){
+    document.getElementById('login-overlay').style.display='flex';
+    checkSetup();
+    return;
+  }
+  // Validate token and load data
   try{
-    const inited=initSupabaseClient();
-    if(!inited)return;
-    // Try to pull from Supabase
-    const[dr]=await Promise.all([sbClient.from('deals').select('*')]);
-    if(dr.error)throw dr.error;
-    if(dr.data&&dr.data.length>0){
-      // Supabase has data - use it
-      deals=dr.data;
-      try{const ar=await sbClient.from('activities').select('*');if(!ar.error)acts=ar.data||[];}catch(e){}
-      try{const lr=await sbClient.from('linkedin_leads').select('*');if(!lr.error)liLeads=lr.data||[];}catch(e){}
-      saveLocal();renderAll();
-      localStorage.setItem('sb_url',sbUrl);
-      localStorage.setItem('sb_key',sbKey);
-      showSPConnected();
-      showToast('Synced from cloud ✓','ok');
-    } else {
-      // Supabase empty - push our deals up
-      showToast('First time setup — uploading deals...','');
-      const chunks=(arr,n)=>Array.from({length:Math.ceil(arr.length/n)},(_,i)=>arr.slice(i*n,i*n+n));
-      const cleanDeals=deals.map(d=>({...d,callLog:Array.isArray(d.callLog)?d.callLog:[]}));
-      for(const chunk of chunks(cleanDeals,20)){
-        const{error}=await sbClient.from('deals').upsert(chunk,{onConflict:'id'});
-        if(error)throw error;
-      }
-      localStorage.setItem('sb_url',sbUrl);
-      localStorage.setItem('sb_key',sbKey);
-      showSPConnected();
-      showToast(deals.length+' deals uploaded to cloud ✓','ok');
+    const res=await fetch('/api/deals',{headers:{'Authorization':'Bearer '+token}});
+    if(res.status===401){
+      localStorage.removeItem('tcrm3_token');
+      document.getElementById('login-overlay').style.display='flex';
+      checkSetup();
+      return;
     }
+    deals=await res.json();
+    // Load activities
+    try{const ar=await fetch('/api/activities',{headers:{'Authorization':'Bearer '+token}});if(ar.ok)acts=await ar.json();}catch(e){}
+    // Load li leads
+    try{const lr=await fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}});if(lr.ok)liLeads=await lr.json();}catch(e){}
+    saveLocal();
+    renderAll();
+    showToast(deals.length+' deals loaded from cloud ✓','ok');
+    showConnected();
   }catch(e){
-    console.error('Supabase init error:',e);
-    // Still show connected if we have the creds
-    if(sbUrl&&sbKey){localStorage.setItem('sb_url',sbUrl);localStorage.setItem('sb_key',sbKey);showSPConnected();}
-    showToast('Working offline','');
+    console.error('API load error:',e);
+    // Fallback to localStorage
+    try{deals=JSON.parse(localStorage.getItem('tcrm3_d')||'[]');}catch(e2){deals=[];}
+    if(deals.length===0){deals=SEED_DEALS;saveLocal();}
+    try{acts=JSON.parse(localStorage.getItem('tcrm3_a')||'[]');}catch(e2){acts=[];}
+    try{liLeads=JSON.parse(localStorage.getItem('tcrm3_li')||'[]');}catch(e2){liLeads=[];}
+    renderAll();
+    showToast('Working offline — '+deals.length+' deals from local cache','');
   }
 }
+
+// ─── AUTH ───
+let API_TOKEN=localStorage.getItem('tcrm3_token')||'';
+
+async function checkSetup(){
+  try{
+    const res=await fetch('/api/auth/setup',{method:'OPTIONS'});
+    // If setup endpoint exists, show setup option on 404 from login
+    document.getElementById('login-setup').style.display='block';
+  }catch(e){}
+}
+
+async function doLogin(){
+  const u=document.getElementById('login-user').value.trim();
+  const p=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-error');
+  const btn=document.getElementById('login-btn');
+  btn.textContent='Signing in...';btn.disabled=true;
+  errEl.style.display='none';
+  try{
+    const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const data=await res.json();
+    if(res.ok&&data.token){
+      localStorage.setItem('tcrm3_token',data.token);
+      API_TOKEN=data.token;
+      document.getElementById('login-overlay').style.display='none';
+      await init();
+    }else{
+      errEl.textContent=data.error||'Login failed';
+      errEl.style.display='block';
+      // Check if we need setup
+      if(!data.token&&data.error==='Invalid credentials'){
+        // Check if admin exists by trying setup
+        const setupRes=await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:'__check__'})});
+        if(setupRes.status===400) document.getElementById('login-setup').style.display='none'; // admin exists
+      }
+    }
+  }catch(e){
+    errEl.textContent='Connection error — working offline';
+    errEl.style.display='block';
+    // Offline fallback
+    try{deals=JSON.parse(localStorage.getItem('tcrm3_d')||'[]');}catch(e2){deals=[];}
+    if(deals.length===0){deals=SEED_DEALS;saveLocal();}
+    try{acts=JSON.parse(localStorage.getItem('tcrm3_a')||'[]');}catch(e2){acts=[];}
+    try{liLeads=JSON.parse(localStorage.getItem('tcrm3_li')||'[]');}catch(e2){liLeads=[];}
+    renderAll();
+    document.getElementById('login-overlay').style.display='none';
+  }
+  btn.textContent='Sign in';btn.disabled=false;
+}
+
+async function doSetup(){
+  const p=document.getElementById('setup-pass').value;
+  if(!p||p.length<4){document.getElementById('login-error').textContent='Password min 4 chars';document.getElementById('login-error').style.display='block';return;}
+  try{
+    const res=await fetch('/api/auth/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:'admin',password:p})});
+    const data=await res.json();
+    if(data.success){
+      document.getElementById('login-error').style.display='none';
+      document.getElementById('login-user').value='admin';
+      document.getElementById('login-pass').value=p;
+      await doLogin();
+    }else{
+      document.getElementById('login-error').textContent=data.error||'Setup failed';
+      document.getElementById('login-error').style.display='block';
+    }
+  }catch(e){
+    document.getElementById('login-error').textContent='Connection error';
+    document.getElementById('login-error').style.display='block';
+  }
+}
+
+function showConnected(){
+  const sdot=document.getElementById('sdot');
+  const stxt=document.getElementById('stxt');
+  if(sdot){sdot.className='sdot on';}
+  if(stxt){stxt.textContent='Connected to cloud';}
+}
+
+// ─── API LAYER ───
+async function apiSave(){
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token)return; // offline
+  try{
+    await fetch('/api/deals/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({deals:deals.map(d=>({...d,callLog:d.callLog||[]}))})});
+    if(acts.length>0)await fetch('/api/activities/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({activities:acts})});
+    if(liLeads.length>0)await fetch('/api/li-leads/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({leads:liLeads})});
+  }catch(e){console.error('API save error:',e);}
+}
+
+async function apiSaveDeal(deal){
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token)return;
+  try{
+    const isExisting=deals.find(d=>d.id===deal.id);
+    const method=isExisting?'PUT':'POST';
+    const res=await fetch('/api/deals',{method:method,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(deal)});
+    return res.ok;
+  }catch(e){console.error('API save deal error:',e);return false;}
+}
+
+async function apiDeleteDeal(id){
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token)return;
+  try{await fetch('/api/deals/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});}catch(e){console.error('API delete error:',e);}
+}
+
 function saveLocal(){
   localStorage.setItem('tcrm3_d',JSON.stringify(deals));
   localStorage.setItem('tcrm3_a',JSON.stringify(acts));
   localStorage.setItem('tcrm3_li',JSON.stringify(liLeads));
 }
-function save(){saveLocal();}
+function save(){saveLocal();apiSave();}
+
 function renderAll(){renderCEO();renderFocus();renderPipeline();renderContacts();renderActivities();renderTeam();renderLinkedIn();renderReports();updateBadges();}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────────────────
@@ -1681,7 +1775,7 @@ function delDeal(){
   if(!confirm('Delete "'+( d?d.company:'this deal')+'"?'))return;
   deals=deals.filter(x=>x.id!==editId);acts=acts.filter(a=>a.dealId!==editId);
   saveLocal();
-  if(sbClient)sbClient.from('deals').delete().eq('id',editId).then(()=>{});
+  // D1 delete handled by apiDeleteDeal
   closeDM();renderAll();showToast('Deleted','');
 }
 
@@ -1754,7 +1848,6 @@ function doImport(){
     deals.push({id:'d_'+Date.now()+'_'+n,company:co,contact:m.contact!==''?row[m.contact]||'':'',phone:m.phone!==''?row[m.phone]||'':'',email:m.email!==''?row[m.email]||'':'',value:0,stage,enquiryType:eq,source:src,outcome:'Pending',prob:DEF_PROB[stage]||10,nextAction:'Initial outreach',nextActionDate:td,notes:[notes2,suburb?'Suburb: '+suburb:''].filter(Boolean).join(' | '),owner:'Udara',brand:'Tactik',createdAt:td,updatedAt:td});n++;
   });
   saveLocal();
-  if(sbClient){pushAllToSupabase().then(()=>showToast(n+' leads imported & synced ✓','ok'));}
   else showToast(n+' leads imported ✓','ok');
   closeImp();renderAll();
   const cNav=document.querySelectorAll('.ni')[4];if(cNav)nav('contacts',cNav);
@@ -1762,192 +1855,86 @@ function doImport(){
 }
 
 // ─── SHEETS ───────────────────────────────────────────────────────────────────
-// ─── SUPABASE DATA LAYER ─────────────────────────────────────────────────────
-function initSupabaseClient(){
-  try{
-    const sb=window.supabase||window.Supabase;
-    if(!sb||!sb.createClient)throw new Error('Supabase SDK not loaded');
-    sbClient=sb.createClient(sbUrl,sbKey);
-    return true;
-  }catch(e){console.error('Supabase init failed',e);return false;}
-}
+
 
 function openSettings(){
-  const sp=document.getElementById('sp');
-  sp.classList.add('open');
-  if(sbClient){showSPConnected();}else{showSPSetup();}
+  // Show simple status + logout
+  const sp=document.querySelector('.sp')||createSettingsPanel();
+  sp.classList.toggle('open');
 }
+
+function createSettingsPanel(){
+  const sp=document.createElement('div');
+  sp.className='sp';
+  sp.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;"><div style="font-size:18px;font-family:var(--hd);letter-spacing:1px;">Settings</div><button class="mo-close" onclick="document.querySelector('.sp').classList.remove('open')">✕</button></div>
+  <div style="margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="sdot on"></span><span style="font-size:13px;color:var(--gr);">Connected to cloud</span></div></div>
+  <div style="margin-bottom:16px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);font-weight:500;margin-bottom:5px;">Change password</div><input class="fi" id="set-old-pw" type="password" placeholder="Current password" style="width:100%;margin-bottom:6px;"><input class="fi" id="set-new-pw" type="password" placeholder="New password" style="width:100%;margin-bottom:8px;"><button class="btn btn-gh btn-sm" style="width:100%;" onclick="changePassword()">Change password</button></div>
+  <div style="border-top:1px solid var(--b1);padding-top:12px;"><button class="btn btn-gh btn-sm" style="width:100%;color:var(--rd);border-color:rgba(255,82,82,.3);" onclick="logout()">Sign out</button></div>`;
+  document.body.appendChild(sp);
+  return sp;
+}
+
+async function changePassword(){
+  const oldPw=document.getElementById('set-old-pw').value;
+  const newPw=document.getElementById('set-new-pw').value;
+  if(!oldPw||!newPw){showToast('Fill in both fields','err');return;}
+  const token=localStorage.getItem('tcrm3_token');
+  try{
+    const res=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({currentPassword:oldPw,newPassword:newPw})});
+    const data=await res.json();
+    if(data.success){showToast('Password changed ✓','ok');document.getElementById('set-old-pw').value='';document.getElementById('set-new-pw').value='';}
+    else{showToast(data.error||'Failed','err');}
+  }catch(e){showToast('Connection error','err');}
+}
+
+function logout(){
+  localStorage.removeItem('tcrm3_token');
+  location.reload();
+}
+
 function closeSP(){document.getElementById('sp').classList.remove('open');}
 function showSPSetup(){document.getElementById('sp-setup').style.display='';document.getElementById('sp-connected').style.display='none';}
-function showSPConnected(){
-  const setup=document.getElementById('sp-setup');
-  const conn=document.getElementById('sp-connected');
-  if(setup)setup.style.display='none';
-  if(conn)conn.style.display='';
-  const el=document.getElementById('sp-project-url');
-  if(el)el.textContent=sbUrl;
-  document.getElementById('sdot').className='sdot on';
-  document.getElementById('stxt').textContent='Database connected';
-  localStorage.setItem('sb_url',sbUrl);
-  localStorage.setItem('sb_key',sbKey);
-}
+// replaced by showConnected()
 
-async function connectSupabase(){
-  const url=document.getElementById('sb-url').value.trim();
-  const key=document.getElementById('sb-key').value.trim();
-  if(!url.startsWith('https://')){showToast('URL must start with https://','err');return;}
-  if(!key.startsWith('eyJ')){showToast('Key must start with eyJ','err');return;}
-  sbUrl=url;sbKey=key;
-  localStorage.setItem('sb_url',url);
-  localStorage.setItem('sb_key',key);
-  const inited=initSupabaseClient();
-  if(!inited){showToast('SDK not loaded — try refreshing','err');return;}
-  showToast('Testing connection...','');
-  const ok=await pullFromSupabase();
-  if(ok){
-    showSPConnected();
-    showToast('Connected! Data loaded ✓','ok');
-    renderAll();
-  }else{
-    showToast('Connection failed — check URL and key','err');
-  }
-}
 
-function disconnectSupabase(){
-  if(!confirm('Disconnect database? Local data will remain.'))return;
-  sbClient=null;sbUrl='';sbKey='';
-  localStorage.removeItem('sb_url');localStorage.removeItem('sb_key');
-  document.getElementById('sdot').className='sdot';
-  document.getElementById('stxt').textContent='Connect Database';
-  showSPSetup();
-  showToast('Disconnected','');
-}
+async 
 
-async function pullFromSupabase(){
-  if(!sbClient)return false;
-  try{
-    const [dr,ar,lr]=await Promise.all([
-      sbClient.from('deals').select('*'),
-      sbClient.from('activities').select('*'),
-      sbClient.from('linkedin_leads').select('*')
-    ]);
-    if(dr.error){console.error('Deals error:',dr.error);throw dr.error;}
-    if(ar.error){console.error('Acts error:',ar.error);}
-    if(lr.error){console.error('LI error:',lr.error);}
-    const pulledDeals=dr.data||[];
-    const pulledActs=ar.data||[];
-    const pulledLI=lr.data||[];
-    console.log('Pulled:',pulledDeals.length,'deals from Supabase');
-    if(pulledDeals.length>0){
-      deals=pulledDeals;
-      acts=pulledActs;
-      liLeads=pulledLI;
-      saveLocal();
-      renderAll();
-    } else {
-      // Supabase is empty - keep current deals, push them up
-      console.log('Supabase empty - keeping local deals:',deals.length);
-      if(deals.length===0){deals=SEED_DEALS;saveLocal();}
-      renderAll();
-    }
-    return true;
-  }catch(e){
-    console.error('Pull failed:',e);
-    // Fall back to localStorage
-    const sd=localStorage.getItem('tcrm3_d');
-    if(sd){deals=JSON.parse(sd);renderAll();}
-    return false;
-  }
-}
 
-async function pushToSupabase(record,table){
-  if(!sbClient)return;
-  try{
-    const{error}=await sbClient.from(table).upsert(record,{onConflict:'id'});
-    if(error)console.error('Push error:',error);
-  }catch(e){console.error('Push failed:',e);}
-}
 
-async function pushAllToSupabase(){
-  if(!sbClient){showToast('Not connected','err');return;}
-  showToast('Pushing all data...','');
-  try{
-    const chunks=(arr,n)=>Array.from({length:Math.ceil(arr.length/n)},(_,i)=>arr.slice(i*n,i*n+n));
-    // Ensure callLog is proper JSON not string
-    const cleanDeals=deals.map(d=>({...d,callLog:Array.isArray(d.callLog)?d.callLog:JSON.parse(d.callLog||'[]') }));
-    for(const chunk of chunks(cleanDeals,20))await sbClient.from('deals').upsert(chunk,{onConflict:'id'});
-    for(const chunk of chunks(acts,50))await sbClient.from('activities').upsert(chunk,{onConflict:'id'});
-    for(const chunk of chunks(liLeads,50))await sbClient.from('linkedin_leads').upsert(chunk,{onConflict:'id'});
-    showToast(deals.length+' deals pushed ✓','ok');
-    await pullFromSupabase();
-  }catch(e){console.error(e);showToast('Push failed: '+e.message,'err');}
-}
+
+
+
+
+
 
 async function manualSync(){
-  if(!sbClient){showToast('Connect database first','err');openSettings();return;}
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token){showToast('Not connected — sign in first','err');return;}
   const btn=document.getElementById('sync-btn');
   if(btn)btn.textContent='Syncing...';
-  const ok=await pullFromSupabase();
-  if(ok){renderAll();showToast('Synced ✓','ok');}
-  else showToast('Sync failed','err');
+  try{
+    const [dr,ar,lr]=await Promise.all([
+      fetch('/api/deals',{headers:{'Authorization':'Bearer '+token}}),
+      fetch('/api/activities',{headers:{'Authorization':'Bearer '+token}}),
+      fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}})
+    ]);
+    if(dr.ok)deals=await dr.json();
+    if(ar.ok)acts=await ar.json();
+    if(lr.ok)liLeads=await lr.json();
+    saveLocal();renderAll();
+    showToast('Synced from cloud ✓','ok');
+  }catch(e){showToast('Sync failed — offline','err');}
   if(btn)btn.textContent='↻ Sync';
 }
 
 // Auto-sync every 60 seconds when connected
 // Auto-sync removed - manual sync only
 
-// Override save to also push to Supabase
-const _saveLocal=saveLocal;
-function save(){
-  saveLocal();
-}
 
 // Push single record after every change
-async function syncRecord(record,table){
-  saveLocal();
-  if(sbClient)await pushToSupabase(record,table);
-}
 
-function buildSQL(){
-  const sql=`-- Run this in Supabase SQL Editor
-create table if not exists deals (
-  id text primary key,
-  company text, contact text, phone text, email text,
-  value numeric default 0, stage text, "enquiryType" text,
-  source text, outcome text, prob numeric default 10,
-  brand text, owner text, "nextAction" text,
-  "nextActionDate" text, "closeDate" text,
-  "dateContacted" text, "dateClosed" text,
-  "daysToClose" numeric, "followUpNum" numeric,
-  notes text, "callLog" jsonb default '[]',
-  "createdAt" text, "updatedAt" text
-);
 
-create table if not exists activities (
-  id text primary key,
-  type text, "dealId" text, rep text,
-  note text, "dueDate" text, status text,
-  "completedAt" text, "createdAt" text
-);
 
-create table if not exists linkedin_leads (
-  id text primary key,
-  name text, company text, title text,
-  status text, message text, date text,
-  rep text, notes text
-);
-
--- Allow public access (anon key)
-alter table deals enable row level security;
-alter table activities enable row level security;
-alter table linkedin_leads enable row level security;
-
-create policy "Public access" on deals for all using (true) with check (true);
-create policy "Public access" on activities for all using (true) with check (true);
-create policy "Public access" on linkedin_leads for all using (true) with check (true);`;
-  const el=document.getElementById('sql-code');
-  if(el)el.textContent=sql;
-}
 function copySQL(){navigator.clipboard.writeText(document.getElementById('sql-code').textContent);showToast('SQL copied ✓','ok');}
 
 // ─── CEO ACTIVITY FEED ───────────────────────────────────────────────────────
@@ -1982,8 +1969,7 @@ function renderCEOFeed(){
   const wonToday=deals.filter(d=>d.outcome==='Won'&&d.updatedAt===td&&(!repFilter||d.owner===repFilter));
 
   // Update counters
-  const feedDate=today();
-  const newDealsToday=deals.filter(d=>d.createdAt===feedDate&&(!repFilter||d.owner===repFilter));
+  const newDealsToday=deals.filter(d=>d.createdAt===eodDate&&(!repFilter||d.owner===repFilter));
   document.getElementById('feed-total').textContent=entries.length;
   document.getElementById('feed-calls').textContent=entries.filter(e=>e.type==='Call'||e.type==='Left VM').length;
   document.getElementById('feed-emails').textContent=entries.filter(e=>e.type==='Email'||e.type==='Follow-up'||e.type==='LinkedIn').length;
