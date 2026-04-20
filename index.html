@@ -1848,7 +1848,7 @@ function doImport(){
     deals.push({id:'d_'+Date.now()+'_'+n,company:co,contact:m.contact!==''?row[m.contact]||'':'',phone:m.phone!==''?row[m.phone]||'':'',email:m.email!==''?row[m.email]||'':'',value:0,stage,enquiryType:eq,source:src,outcome:'Pending',prob:DEF_PROB[stage]||10,nextAction:'Initial outreach',nextActionDate:td,notes:[notes2,suburb?'Suburb: '+suburb:''].filter(Boolean).join(' | '),owner:'Udara',brand:'Tactik',createdAt:td,updatedAt:td});n++;
   });
   saveLocal();
-  else showToast(n+' leads imported ✓','ok');
+  apiSave();
   closeImp();renderAll();
   const cNav=document.querySelectorAll('.ni')[4];if(cNav)nav('contacts',cNav);
   showToast(n+' leads imported ✓','ok');
@@ -1892,8 +1892,8 @@ function logout(){
   location.reload();
 }
 
-function closeSP(){document.getElementById('sp').classList.remove('open');}
-function showSPSetup(){document.getElementById('sp-setup').style.display='';document.getElementById('sp-connected').style.display='none';}
+function closeSP(){const sp=document.querySelector('.sp');if(sp)sp.classList.remove('open');}
+// showSPSetup deprecated
 // replaced by showConnected()
 
 
