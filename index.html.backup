@@ -343,13 +343,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
 </div>
 
 <div class="app">
-<div id="overdue-banner" style="display:none;background:rgba(255,82,82,.1);border-bottom:1px solid rgba(255,82,82,.3);padding:10px 16px;cursor:pointer;" onclick="nav('focus',document.querySelectorAll('.ni')[1])">
-  <div style="display:flex;align-items:center;gap:8px;max-width:1200px;margin:0 auto;">
-    <span style="font-size:16px;">⚠</span>
-    <span style="font-size:13px;color:var(--rd);font-weight:500;" id="overdue-text">0 overdue follow-ups</span>
-    <span style="font-size:11px;color:var(--t3);margin-left:auto;">Click to view →</span>
-  </div>
-</div>
 
 <!-- SIDEBAR -->
 <aside class="sb">
@@ -382,7 +375,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="sb-lbl">Data</div>
       <div class="ni" onclick="nav('analytics',this)"><span class="ni-ic">▦</span>CEO Analytics</div>
       <div class="ni" onclick="nav('reports',this)"><span class="ni-ic">◻</span>Reports</div>
-      <div class="ni" onclick="nav('forecast',this)"><span class="ni-ic">◐</span>Weekly Forecast</div>
     </div>
   </nav>
   <div class="sb-bot">
@@ -543,7 +535,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <!-- TODAY'S FOCUS -->
     <div class="view" id="view-focus">
       <div class="mrow">
-        <div class="mc"><div class="mc-lbl">Tasks today</div><div class="mc-val" id="f-tasks">0</div>      <div style="margin-top:16px;" id="focus-stale"></div></div>
+        <div class="mc"><div class="mc-lbl">Tasks today</div><div class="mc-val" id="f-tasks">0</div></div>
         <div class="mc"><div class="mc-lbl">Overdue</div><div class="mc-val cr" id="f-od">0</div></div>
         <div class="mc"><div class="mc-lbl">Deals to call</div><div class="mc-val ca" id="f-calls">0</div></div>
         <div class="mc"><div class="mc-lbl">Follow-ups</div><div class="mc-val" id="f-fus">0</div></div>
@@ -818,25 +810,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <!-- REPORTS -->
     <div class="view" id="view-reports">
       <div class="mrow">
-        <div class="mc"><div class="mc-lbl">Raw pipeline</div><div class="mc-val" id="r-raw">$0</div>      <div style="margin-top:20px;" id="r-reasons"></div></div>
-    <div class="view" id="view-forecast">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div>
-          <div style="font-family:var(--hd);font-size:20px;letter-spacing:1px;">Weekly Forecast</div>
-          <div style="font-size:12px;color:var(--t3);margin-top:2px;" id="fc-period"></div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button class="btn btn-gh btn-sm" onclick="emailForecast()">📧 Email to CEO</button>
-          <button class="btn btn-gh btn-sm" onclick="exportForecastCSV()">↓ Export CSV</button>
-        </div>
-      </div>
-      <div id="fc-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;"></div>
-      <div id="fc-deals-won" style="margin-bottom:24px;"></div>
-      <div id="fc-deals-lost" style="margin-bottom:24px;"></div>
-      <div id="fc-overdue" style="margin-bottom:24px;"></div>
-      <div id="fc-pipeline" style="margin-bottom:24px;"></div>
-    </div>
-
+        <div class="mc"><div class="mc-lbl">Raw pipeline</div><div class="mc-val" id="r-raw">$0</div></div>
         <div class="mc"><div class="mc-lbl">Weighted forecast</div><div class="mc-val cg" id="r-wtd">$0</div></div>
         <div class="mc"><div class="mc-lbl">Avg deal size</div><div class="mc-val" id="r-avg">$0</div></div>
         <div class="mc"><div class="mc-lbl">Win rate</div><div class="mc-val ca" id="r-wr">0%</div></div>
@@ -876,13 +850,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="fl3">
         <div><div class="flbl">Value (AUD)</div><input class="fi" id="f-val" type="number" placeholder="5000" oninput="updP()"></div>
         <div><div class="flbl">Stage</div><select class="fi" id="f-stage" onchange="stgChg()"><option>Lead</option><option>Qualified</option><option>Proposal Sent</option><option>Negotiation</option><option>Won</option><option>Lost</option><option>On Hold</option><option>Final Follow Up</option></select></div>
-        <div><div class="flbl">Outcome</div><select class="fi" id="f-out" onchange="outcomeChg()"><option>Pending</option><option>Won</option><option>Lost</option><option>No Response</option><option>Nurturing</option></select></div>
-      </div>
-      <div class="fl2" id="f-reason-row" style="display:none;">
-        <div><div class="flbl">Win reason</div><select class="fi" id="f-win-reason"><option value="">Select...</option><option>Competitive pricing</option><option>Strong relationship</option><option>Referral trust</option><option>Quick turnaround</option><option>Full service package</option><option>Previous client</option><option>Other</option></select></div>
-        <div><div class="flbl">Loss reason</div><select class="fi" id="f-loss-reason"><option value="">Select...</option><option>Price too high</option><option>Went with competitor</option><option>No budget</option><option>Bad timing</option><option>No response</option><option>Took too long</option><option>Scope mismatch</option><option>Internal decision</option><option>Other</option></select></div>
-      </div>
-      <div class="fl3">
+        <div><div class="flbl">Outcome</div><select class="fi" id="f-out"><option>Pending</option><option>Won</option><option>Lost</option><option>No Response</option><option>Nurturing</option></select></div>
       </div>
       <div class="fl3">
         <div><div class="flbl">Brand</div><select class="fi" id="f-brand"><option>Tactik</option><option>Tamed Marketing</option></select></div>
@@ -915,15 +883,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="sdiv">Next action</div>
       <div class="fl"><div class="flbl">Next action</div><input class="fi" id="f-na" placeholder="Send proposal, Follow up call, Book meeting..."></div>
 
-      <div class="sdiv">Proposal / Quote</div>
-      <div class="fl2">
-        <div><div class="flbl">Proposal status</div><select class="fi" id="f-prop-status"><option value="">None</option><option>Drafting</option><option>Sent</option><option>Viewed</option><option>Accepted</option><option>Rejected</option></select></div>
-        <div><div class="flbl">Proposal link</div><input class="fi" id="f-prop-link" placeholder="https://... or doc name"></div>
-      </div>
-      <div class="fl2">
-        <div><div class="flbl">Proposal sent date</div><input class="fi" id="f-prop-date" type="date"></div>
-        <div><div class="flbl">Quote value (AUD)</div><input class="fi" id="f-prop-value" type="number" placeholder="Auto-fill from deal value"></div>
-      </div>
       <div class="sdiv">Deal notes</div>
       <div class="fl"><div class="flbl">Overall notes</div><textarea class="fi" id="f-no" placeholder="Context, budget discussed, requirements, objections, background info..."></textarea></div>
 
@@ -945,9 +904,6 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           </div>
         </div>
       </div>
-    </div>
-    <div class="sdiv" id="tl-section" style="display:none;">Activity Timeline <span style="font-size:11px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;">(full history)</span></div>
-      <div id="tl-list" style="display:none;max-height:240px;overflow-y:auto;"></div>
     </div>
     <div class="mo-ft">
       <button class="del-btn" id="del-btn" style="display:none" onclick="delDeal()">Delete</button>
@@ -1242,7 +1198,7 @@ function saveLocal(){
 }
 function save(){saveLocal();apiSave();}
 
-function renderAll(){updateOverdueBanner();renderCEO();renderFocus();renderPipeline();renderContacts();renderActivities();renderTeam();renderLinkedIn();renderReports();updateBadges();}
+function renderAll(){renderCEO();renderFocus();renderPipeline();renderContacts();renderActivities();renderTeam();renderLinkedIn();renderReports();updateBadges();}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────────────────
 function nav(v,el){
@@ -1250,9 +1206,9 @@ function nav(v,el){
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   el.classList.add('active');
-  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'LinkedIn / VA Tracker',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports',forecast:'Weekly Forecast'};
+  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'LinkedIn / VA Tracker',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports'};
   document.getElementById('ttl').textContent=T[v]||v;
-  if(v==='analytics')setTimeout(renderAnalytics,50);if(v==='forecast')setTimeout(renderForecast,50);
+  if(v==='analytics')setTimeout(renderAnalytics,50);
   if(v==='calendar')setTimeout(renderCalendar,50);
   const btn=document.getElementById('add-btn');
   if(v==='activities'){btn.textContent='+ Log Activity';btn.onclick=openActModal;}
@@ -1454,15 +1410,7 @@ function renderFocus(){
   const tw=new Date();tw.setDate(tw.getDate()+14);const tws=tw.toISOString().split('T')[0];
   const soon=deals.filter(d=>d.closeDate&&d.closeDate>=td&&d.closeDate<=tws&&d.stage!=='Won'&&d.stage!=='Lost').sort((a,b)=>a.closeDate.localeCompare(b.closeDate));
   document.getElementById('f-closing').innerHTML=soon.length?soon.map(d=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--b1);"><span class="sdot-sm ${SDOT[d.stage]}"></span><div style="flex:1;"><div style="font-size:13px;font-weight:500;">${d.company}</div><div style="font-size:11px;color:var(--t3);">${d.enquiryType||''}</div></div><div style="text-align:right;"><div style="font-size:12px;font-family:var(--mo);color:var(--gr);">${fmt(d.value)}</div><div style="font-size:11px;color:var(--am);">${fd(d.closeDate)}</div></div><span style="background:rgba(79,142,247,.12);color:var(--ac);font-size:11px;padding:2px 6px;border-radius:5px;font-family:var(--mo);">${d.prob||0}%</span></div>`).join(''):'<div style="color:var(--t3);font-size:13px;padding:16px 0;">No close dates set in next 14 days</div>';
-
-  // Stale deals
-  const stale=getStaleDeals();
-  const staleEl=document.getElementById('focus-stale');
-  if(staleEl){
-    if(stale.length){
-      staleEl.innerHTML='<div style="font-size:14px;font-weight:500;margin-bottom:8px;color:var(--am);">⏳ Stale Deals (14+ days no contact)</div>'+stale.sort((a,b)=>b.staleDays-a.staleDays).map(d=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.15);border-radius:6px;margin-bottom:4px;font-size:13px;"><div><span style="font-weight:500;">'+d.company+'</span><span style="color:var(--t3);"> · '+d.staleDays+'d stale · '+d.stage+'</span></div><div style="display:flex;gap:6px;"><button class="btn btn-gh btn-sm" onclick="nudgeStale(\''+d.id+'\')">Nudge</button><button class="btn btn-gh btn-sm" style="color:var(--rd);border-color:rgba(255,82,82,.3);" onclick="markStaleLost(\''+d.id+'\')">Mark Lost</button></div></div>').join('');
-    }else{staleEl.innerHTML='';}
-  }}
+}
 
 // ─── PIPELINE ─────────────────────────────────────────────────────────────────
 function rottenStatus(deal){
@@ -1561,8 +1509,6 @@ function dropDeal(e,stage){
   const oldStage=deal.stage;
   deal.stage=stage;
   deal.updatedAt=today();
-  if(!deal.stageHistory)deal.stageHistory=[];
-  deal.stageHistory.push({date:today(),from:oldStage,to:stage,changedBy:'Udara'});
   // Auto-update outcome if moving to Won/Lost
   if(stage==='Won')deal.outcome='Won';
   if(stage==='Lost')deal.outcome='Lost';
@@ -1666,26 +1612,7 @@ function renderReports(){
   const outs=['Won','Lost','Pending','No Response','Nurturing'];const outC={Won:'var(--gr)',Lost:'var(--rd)',Pending:'var(--ac)','No Response':'var(--t2)',Nurturing:'var(--pu)'};
   const od=outs.map(o=>({o,c:deals.filter(d=>d.outcome===o).length})).filter(x=>x.c>0);const maxO=Math.max(...od.map(x=>x.c),1);
   document.getElementById('r-outcome').innerHTML=od.map(x=>`<div class="br"><div class="br-lbl">${x.o}</div><div class="br-track"><div class="br-fill" style="background:${outC[x.o]};width:${Math.round((x.c/maxO)*100)}%"></div></div><div class="br-val">${x.c}</div></div>`).join('');
-
-  // Win/Loss reasons
-  const reasonsEl=document.getElementById('r-reasons');
-  if(reasonsEl){
-    const wonReasons={};const lossReasons={};
-    deals.filter(d=>d.winReason).forEach(d=>{wonReasons[d.winReason]=(wonReasons[d.winReason]||0)+1;});
-    deals.filter(d=>d.lossReason).forEach(d=>{lossReasons[d.lossReason]=(lossReasons[d.lossReason]||0)+1;});
-    let html2='';
-    if(Object.keys(wonReasons).length){
-      html2+='<div style="font-size:13px;font-weight:500;margin-bottom:8px;color:var(--gr);">🏆 Win Reasons</div>';
-      Object.entries(wonReasons).sort((a,b)=>b[1]-a[1]).forEach(([r,c])=>{html2+=`<div class="br"><div class="br-lbl">${r}</div><div class="br-track"><div class="br-fill" style="background:var(--gr);width:${Math.round(c/deals.filter(d=>d.outcome==='Won').length*100)}%"></div></div><div class="br-val">${c}</div></div>`;});
-    }
-    if(Object.keys(lossReasons).length){
-      html2+='<div style="font-size:13px;font-weight:500;margin:12px 0 8px;color:var(--rd);">📉 Loss Reasons</div>';
-      const lostDeals=deals.filter(d=>d.outcome==='Lost').length;
-      Object.entries(lossReasons).sort((a,b)=>b[1]-a[1]).forEach(([r,c])=>{html2+=`<div class="br"><div class="br-lbl">${r}</div><div class="br-track"><div class="br-fill" style="background:var(--rd);width:${Math.round(c/lostDeals*100)}%"></div></div><div class="br-val">${c}</div></div>`;});
-    }
-    if(!html2)html2='<div style="color:var(--t3);font-size:12px;">No win/loss reasons recorded yet. Add reasons when marking deals Won or Lost.</div>';
-    reasonsEl.innerHTML=html2;
-  }}
+}
 
 // ─── BADGES ───────────────────────────────────────────────────────────────────
 function updateBadges(){
@@ -1836,39 +1763,12 @@ function saveDeal(){
     daysToClose,
     followUpNum:parseInt(document.getElementById('f-fnum').value)||0,
     notes:document.getElementById('f-no').value.trim(),
-    winReason:document.getElementById('f-win-reason').value,
-    lossReason:document.getElementById('f-loss-reason').value,
-    proposalStatus:document.getElementById('f-prop-status').value,
-    proposalLink:document.getElementById('f-prop-link').value.trim(),
-    proposalDate:document.getElementById('f-prop-date').value,
-    proposalValue:parseFloat(document.getElementById('f-prop-value').value)||0,
     callLog:existing.callLog||[],
-    valueHistory:existing.valueHistory||[],
-    stageHistory:existing.stageHistory||[],
     createdAt:existing.createdAt||today(),
     updatedAt:today()
   };
-  
-  // Track value changes
-  if(editId&&existing.value!==d.value){
-    if(!d.valueHistory)d.valueHistory=[];
-    d.valueHistory.push({date:today(),oldValue:existing.value||0,newValue:d.value,changedBy:'Udara'});
-  }
-  
-  // Track stage changes
-  if(editId&&existing.stage!==d.stage){
-    if(!d.stageHistory)d.stageHistory=[];
-    d.stageHistory.push({date:today(),from:existing.stage,to:d.stage,changedBy:'Udara'});
-  }
-  
-  // Duplicate check for new deals
-  if(!editId){
-    const dup=checkDuplicate(d.company,null);
-    if(dup){if(!confirm('A deal for "'+dup.company+'" already exists ('+dup.stage+', $'+(dup.value||0).toLocaleString()+'). Add anyway?'))return;}
-  }
-  
   if(editId)deals=deals.map(x=>x.id===editId?d:x);else deals.push(d);
-  syncRecord(d,'deals');closeDM();renderAll();updateOverdueBanner();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
+  syncRecord(d,'deals');closeDM();renderAll();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
 }
 function delDeal(){
   if(!editId)return;const d=deals.find(x=>x.id===editId);
@@ -1953,229 +1853,6 @@ function doImport(){
   const cNav=document.querySelectorAll('.ni')[4];if(cNav)nav('contacts',cNav);
   showToast(n+' leads imported ✓','ok');
 }
-
-
-
-// ═══════════════════════════════════════════════════════════════
-// WIN/LOSS REASONS
-// ═══════════════════════════════════════════════════════════════
-function outcomeChg(){
-  const out=document.getElementById('f-out').value;
-  const row=document.getElementById('f-reason-row');
-  if(!row)return;
-  if(out==='Won'){row.style.display='';document.getElementById('f-win-reason').parentElement.style.display='';document.getElementById('f-loss-reason').parentElement.style.display='none';}
-  else if(out==='Lost'){row.style.display='';document.getElementById('f-win-reason').parentElement.style.display='none';document.getElementById('f-loss-reason').parentElement.style.display='';}
-  else{row.style.display='none';}
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DEAL TIMELINE
-// ═══════════════════════════════════════════════════════════════
-function renderTimeline(dealId){
-  const deal=deals.find(d=>d.id===dealId);
-  if(!deal)return;
-  const tlSection=document.getElementById('tl-section');
-  const tlList=document.getElementById('tl-list');
-  if(!tlSection||!tlList)return;
-  
-  const events=[];
-  // Stage changes from call log
-  (deal.callLog||[]).forEach(cl=>{
-    events.push({date:cl.date,time:cl.time||'',type:cl.type,rep:cl.rep,note:cl.note,category:'contact'});
-  });
-  // Activities for this deal
-  acts.filter(a=>a.dealId===dealId).forEach(a=>{
-    events.push({date:a.createdAt||a.dueDate||'',time:'',type:a.type,rep:a.rep,note:a.note,category:'activity',status:a.status});
-  });
-  // Value history
-  (deal.valueHistory||[]).forEach(vh=>{
-    events.push({date:vh.date,time:'',type:'Value change',rep:vh.changedBy||'',note:'$'+(vh.oldValue||0).toLocaleString()+' → $'+(vh.newValue||0).toLocaleString(),category:'value'});
-  });
-  // Proposal events
-  if(deal.proposalStatus){
-    events.push({date:deal.proposalDate||deal.updatedAt||'',time:'',type:'Proposal',rep:'',note:deal.proposalStatus+(deal.proposalLink?' · '+deal.proposalLink:''),category:'proposal'});
-  }
-  // Creation
-  events.push({date:deal.createdAt||'',time:'',type:'Deal created',rep:'',note:deal.enquiryType+' from '+deal.source,category:'created'});
-  // Stage changes
-  if(deal.stageHistory&&(deal.stageHistory.length||0)>0){
-    deal.stageHistory.forEach(sh=>{
-      events.push({date:sh.date,time:'',type:'Stage change',rep:sh.changedBy||'',note:sh.from+' → '+sh.to,category:'stage'});
-    });
-  }
-  
-  events.sort((a,b)=>b.date.localeCompare(a.date));
-  
-  if(!events.length){tlSection.style.display='none';tlList.style.display='none';return;}
-  tlSection.style.display='';tlList.style.display='';
-  
-  const catIcon={contact:'📞',activity:'✓',value:'💰',proposal:'📄',created:'🆕',stage:'🔀'};
-  const catColor={contact:'var(--ac)',activity:'var(--gr)',value:'var(--am)',proposal:'var(--pu)',created:'var(--t3)',stage:'var(--ac)'};
-  
-  tlList.innerHTML=events.map(e=>`<div style="display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--b1);font-size:13px;">
-    <div style="min-width:20px;text-align:center;">${catIcon[e.category]||'•'}</div>
-    <div style="flex:1;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-        <span style="font-weight:500;color:var(--tx);">${e.type}${e.rep?' · '+e.rep:''}</span>
-        <span style="font-size:11px;color:var(--t3);">${e.date}${e.status?' · '+e.status:''}</span>
-      </div>
-      <div style="color:var(--t2);line-height:1.4;">${e.note||'—'}</div>
-    </div>
-  </div>`).join('');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// DUPLICATE DETECTION
-// ═══════════════════════════════════════════════════════════════
-function checkDuplicate(company, excludeId){
-  if(!company)return null;
-  const q=company.toLowerCase().trim();
-  return deals.find(d=>d.id!==excludeId&&d.company&&d.company.toLowerCase().trim()===q);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// OVERDUE FOLLOW-UP BANNER
-// ═══════════════════════════════════════════════════════════════
-function updateOverdueBanner(){
-  const td=today();
-  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.nextActionDate&&d.nextActionDate<td);
-  const banner=document.getElementById('overdue-banner');
-  const text=document.getElementById('overdue-text');
-  if(!banner||!text)return;
-  if(overdue.length>0){
-    banner.style.display='';
-    text.textContent=overdue.length+' overdue follow-up'+(overdue.length>1?'s':'');
-  }else{
-    banner.style.display='none';
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// STALE DEAL AUTOMATION
-// ═══════════════════════════════════════════════════════════════
-function getStaleDeals(){
-  const td=today();
-  return deals.filter(d=>{
-    if(d.stage==='Won'||d.stage==='Lost')return false;
-    const lastContact=getLastContactDate(d);
-    if(!lastContact)return false;
-    const diff=Math.round((new Date(td)-new Date(lastContact))/86400000);
-    return diff>14;
-  }).map(d=>({...d,staleDays:Math.round((new Date(td)-new Date(getLastContactDate(d)))/86400000)}));
-}
-
-function getLastContactDate(deal){
-  const dates=[];
-  if(deal.dateContacted)dates.push(deal.dateContacted);
-  if(deal.updatedAt)dates.push(deal.updatedAt);
-  (deal.callLog||[]).forEach(cl=>{if(cl.date)dates.push(cl.date);});
-  const dealActs=acts.filter(a=>a.dealId===deal.id);
-  dealActs.forEach(a=>{if(a.completedAt||a.createdAt)dates.push(a.completedAt||a.createdAt);});
-  if(!dates.length)return null;
-  dates.sort();
-  return dates[dates.length-1];
-}
-
-function markStaleLost(dealId){
-  const d=deals.find(x=>x.id===dealId);
-  if(!d)return;
-  if(!confirm('Mark "'+d.company+'" as Lost? (No activity for 14+ days)'))return;
-  d.stage='Lost';d.outcome='Lost';d.lossReason='No response';d.dateClosed=today();d.updatedAt=today();
-  save();renderAll();showToast(d.company+' marked Lost (stale)','');
-}
-
-function nudgeStale(dealId){
-  const d=deals.find(x=>x.id===dealId);
-  if(!d)return;
-  d.nextAction='Follow up (stale deal)';d.nextActionDate=today();d.updatedAt=today();
-  save();renderAll();showToast(d.company+' nudged — follow up today','ok');
-}
-
-// ═══════════════════════════════════════════════════════════════
-// WEEKLY FORECAST
-// ═══════════════════════════════════════════════════════════════
-function renderForecast(){
-  const td=today();
-  const d=new Date(td);
-  const day=d.getDay();
-  const diff=day===0?6:day-1;
-  const mon=new Date(d);mon.setDate(d.getDate()-diff);
-  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
-  const wkStart=mon.toISOString().slice(0,10);
-  const wkEnd=sun.toISOString().slice(0,10);
-  
-  document.getElementById('fc-period').textContent=fd(wkStart)+' — '+fd(wkEnd);
-  
-  const wonThisWeek=deals.filter(d=>d.stage==='Won'&&d.updatedAt&&d.updatedAt>=wkStart&&d.updatedAt<=wkEnd);
-  const lostThisWeek=deals.filter(d=>d.stage==='Lost'&&d.updatedAt&&d.updatedAt>=wkStart&&d.updatedAt<=wkEnd);
-  const wonVal=wonThisWeek.reduce((s,d)=>s+(d.value||0),0);
-  const active=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost');
-  const pipeVal=active.reduce((s,d)=>s+(d.value||0),0);
-  const wtdVal=active.reduce((s,d)=>s+(d.value||0)*(d.prob||0)/100,0);
-  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.nextActionDate&&d.nextActionDate<td);
-  const stale=getStaleDeals();
-  
-  // Summary cards
-  document.getElementById('fc-summary').innerHTML=[
-    {label:'Won This Week',value:'$'+wonVal.toLocaleString(),sub:wonThisWeek.length+' deals',color:'var(--gr)'},
-    {label:'Pipeline',value:'$'+pipeVal.toLocaleString(),sub:active.length+' active deals',color:'var(--ac)'},
-    {label:'Weighted',value:'$'+wtdVal.toLocaleString(),sub:'Probability-adjusted',color:'var(--am)'},
-    {label:'Overdue',value:overdue.length+'',sub:stale.length+' stale (14d+)',color:overdue.length?'var(--rd)':'var(--gr)'},
-  ].map(c=>`<div style="background:var(--s2);border:1px solid var(--b1);border-radius:10px;padding:14px;">
-    <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">${c.label}</div>
-    <div style="font-size:22px;font-weight:700;color:${c.color};font-family:var(--mo);">${c.value}</div>
-    <div style="font-size:11px;color:var(--t3);margin-top:3px;">${c.sub}</div>
-  </div>`).join('');
-  
-  // Won deals
-  document.getElementById('fc-deals-won').innerHTML=wonThisWeek.length?`<div style="font-size:14px;font-weight:500;margin-bottom:10px;color:var(--gr);">✓ Won This Week</div>`+wonThisWeek.map(d=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(76,175,80,.06);border:1px solid rgba(76,175,80,.15);border-radius:6px;margin-bottom:4px;font-size:13px;">
-    <div><span style="font-weight:500;">${d.company}</span><span style="color:var(--t3);"> · ${d.enquiryType}</span></div>
-    <div style="font-family:var(--mo);color:var(--gr);">$${(d.value||0).toLocaleString()}</div>
-  </div>`).join(''):'<div style="color:var(--t3);font-size:13px;padding:12px;">No deals won this week</div>';
-  
-  // Lost deals with reasons
-  document.getElementById('fc-deals-lost').innerHTML=lostThisWeek.length?`<div style="font-size:14px;font-weight:500;margin-bottom:10px;color:var(--rd);">✗ Lost This Week</div>`+lostThisWeek.map(d=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(255,82,82,.06);border:1px solid rgba(255,82,82,.15);border-radius:6px;margin-bottom:4px;font-size:13px;">
-    <div><span style="font-weight:500;">${d.company}</span><span style="color:var(--t3);"> · ${d.lossReason||'No reason given'}</span></div>
-    <div style="font-family:var(--mo);color:var(--rd);">$${(d.value||0).toLocaleString()}</div>
-  </div>`).join(''):'<div style="color:var(--t3);font-size:13px;padding:12px;">No deals lost this week 🎉</div>';
-  
-  // Overdue follow-ups
-  document.getElementById('fc-overdue').innerHTML=overdue.length?`<div style="font-size:14px;font-weight:500;margin-bottom:10px;color:var(--rd);">⚠ Overdue Follow-ups</div>`+overdue.sort((a,b)=>a.nextActionDate.localeCompare(b.nextActionDate)).map(d=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,82,82,.04);border:1px solid var(--b1);border-radius:6px;margin-bottom:4px;font-size:13px;">
-    <div><span style="font-weight:500;">${d.company}</span><span style="color:var(--t3);"> · ${d.nextAction||'No action set'}</span></div>
-    <div style="font-size:12px;color:var(--rd);">${fd(d.nextActionDate)} (${Math.round((new Date(td)-new Date(d.nextActionDate))/86400000)}d overdue)</div>
-  </div>`).join(''):'';
-  
-  // Pipeline by stage
-  document.getElementById('fc-pipeline').innerHTML=`<div style="font-size:14px;font-weight:500;margin-bottom:10px;">Pipeline by Stage</div>`+STAGES.filter(s=>s!=='Won'&&s!=='Lost').map(s=>{
-    const sd=active.filter(d=>d.stage===s);
-    const v=sd.reduce((x,d)=>x+(d.value||0),0);
-    const wv=sd.reduce((x,d)=>x+(d.value||0)*(d.prob||0)/100,0);
-    return`<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--b1);font-size:13px;">
-      <span class="sdot-sm ${SDOT[s]}"></span>
-      <span style="min-width:120px;margin-left:8px;">${s}</span>
-      <span style="font-family:var(--mo);min-width:40px;">${sd.length}</span>
-      <span style="font-family:var(--mo);color:${SCOL[s]};min-width:80px;">$${v.toLocaleString()}</span>
-      <span style="font-family:var(--mo);color:var(--t3);font-size:12px;">$${wv.toLocaleString()} wtd</span>
-    </div>`;
-  }).join('');
-}
-
-function emailForecast(){
-  showToast('Email forecast — configure CEO email in settings first','err');
-}
-
-function exportForecastCSV(){
-  const td=today();
-  const active=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost');
-  let csv='Company,Stage,Value,Probability,Weighted,Next Action,Next Date,Owner\n';
-  active.sort((a,b)=>(b.value||0)-(a.value||0)).forEach(d=>{
-    csv+=`"${d.company}","${d.stage}",${d.value||0},${d.prob||0}%,${Math.round((d.value||0)*(d.prob||0)/100)},"${d.nextAction||''}","${d.nextActionDate||''}","${d.owner||''}"\n`;
-  });
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='forecast-'+td+'.csv';a.click();
-  showToast('Forecast exported ✓','ok');
-}
-
 
 // ─── SHEETS ───────────────────────────────────────────────────────────────────
 
