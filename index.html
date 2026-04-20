@@ -1205,7 +1205,7 @@ function showConnected(){
   const sdot=document.getElementById('sdot');
   const stxt=document.getElementById('stxt');
   if(sdot){sdot.className='sdot on';}
-  if(stxt){stxt.textContent='Connected to cloud';}
+  if(stxt){stxt.textContent='Settings';}
 }
 
 // ─── API LAYER ───
@@ -1425,10 +1425,13 @@ function renderCEO(){
 // ─── TODAY'S FOCUS ────────────────────────────────────────────────────────────
 function renderFocus(){
   const td=today();
-  const tasks=acts.filter(a=>a.status!=='Done'&&a.dueDate&&a.dueDate<=td).sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
+  // Build task list from activities + deal-level follow-ups
+  const actTasks=acts.filter(a=>a.status!=='Done'&&a.dueDate&&a.dueDate<=td).map(a=>({id:a.id,type:a.type,company:(deals.find(d=>d.id===a.dealId)||{}).company||a.dealId,dueDate:a.dueDate,note:a.note,rep:a.rep,source:'activity'}));
+  const dealTasks=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.nextActionDate&&d.nextActionDate<=td&&!actTasks.find(a=>a.id===d.id)).map(d=>({id:d.id,type:d.nextAction||'Follow-up',company:d.company,dueDate:d.nextActionDate,note:d.nextAction,rep:d.owner,source:'deal'}));
+  const tasks=[...actTasks,...dealTasks].sort((a,b)=>a.dueDate.localeCompare(b.dueDate));
   const od=tasks.filter(a=>a.dueDate<td);
-  const calls=tasks.filter(a=>a.type==='Call');
-  const fus=tasks.filter(a=>a.type==='Follow-up');
+  const calls=tasks.filter(a=>a.type==='Call'||(a.type||'').toLowerCase().includes('call'));
+  const fus=tasks.filter(a=>a.type==='Follow-up'||(a.type||'').toLowerCase().includes('follow'));
   document.getElementById('f-tasks').textContent=tasks.length;
   document.getElementById('f-od').textContent=od.length;
   document.getElementById('f-calls').textContent=calls.length;
@@ -1437,9 +1440,9 @@ function renderFocus(){
 
   const fl=document.getElementById('focus-list');
   fl.innerHTML=tasks.length?tasks.map(a=>{
-    const deal=deals.find(d=>d.id===a.dealId);
     const isOD=a.dueDate<td;
-    return`<div class="ti"><div class="ti-ic ${ACTCL[a.type]||'ti-call'}">${ACTIC[a.type]||'◇'}</div><div style="flex:1;"><div class="ti-name">${deal?deal.company:a.dealId}${isOD?'<span class="od-tag">overdue</span>':''}</div><div class="ti-det">${a.type}${deal&&deal.enquiryType?' · '+deal.enquiryType:''}${a.rep?' · '+a.rep:''}${a.note?' — '+a.note:''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;"><span style="font-size:11px;color:var(--t3);font-family:var(--mo);">${fd(a.dueDate)}</span><button class="done-btn" onclick="markDone('${a.id}')">Done</button></div></div>`;
+    const icon=a.source==='deal'?'📌':(ACTIC[a.type]||'◇');
+    return`<div class="ti" style="cursor:pointer;" onclick="editDeal('${a.id}')"><div class="ti-ic ${ACTCL[a.type]||'ti-call'}">${icon}</div><div style="flex:1;"><div class="ti-name">${a.company}${isOD?'<span class="od-tag">overdue</span>':''}</div><div class="ti-det">${a.type}${a.rep?' · '+a.rep:''}${a.note&&a.note!==a.type?' — '+a.note:''}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;"><span style="font-size:11px;color:var(--t3);font-family:var(--mo);">${fd(a.dueDate)}</span>${a.source==='deal'?'<span style="font-size:10px;color:var(--t3);">'+Math.round((new Date(td)-new Date(a.dueDate))/86400000)+'d overdue</span>':''}</div></div>`;
   }).join(''):'<div style="color:var(--t3);font-size:13px;padding:20px 0;text-align:center;">✓ All clear — no pending tasks</div>';
 
   // Snap
