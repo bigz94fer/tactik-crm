@@ -1224,18 +1224,26 @@ function showConnected(){
   const sdot=document.getElementById('sdot');
   const stxt=document.getElementById('stxt');
   if(sdot){sdot.className='sdot on';}
-  if(stxt){stxt.textContent='Settings';}
+  if(stxt){stxt.textContent='Cloud connected';}
+}
+function showDisconnected(){
+  const sdot=document.getElementById('sdot');
+  const stxt=document.getElementById('stxt');
+  if(sdot){sdot.className='sdot';}
+  if(stxt){stxt.textContent='Offline';}
 }
 
 // ─── API LAYER ───
 async function apiSave(){
   const token=localStorage.getItem('tcrm3_token');
-  if(!token)return; // offline
+  if(!token){showDisconnected();return;}
   try{
-    await fetch('/api/deals/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({deals:deals.map(d=>({...d,callLog:d.callLog||[]}))})});
+    const res=await fetch('/api/deals/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({deals:deals.map(d=>({...d,callLog:d.callLog||[]}))})});
+    if(!res.ok)throw new Error('Deals bulk '+res.status);
     if(acts.length>0)await fetch('/api/activities/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({activities:acts})});
     if(liLeads.length>0)await fetch('/api/li-leads/bulk',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({leads:liLeads})});
-  }catch(e){console.error('API save error:',e);}
+    showConnected();
+  }catch(e){console.error('API save error:',e);showDisconnected();}
 }
 
 async function apiSaveDeal(deal){
@@ -2287,7 +2295,7 @@ async
 
 async function manualSync(){
   const token=localStorage.getItem('tcrm3_token');
-  if(!token){showToast('Not connected — sign in first','err');return;}
+  if(!token){showToast('Not connected — sign in first','err');showDisconnected();return;}
   const btn=document.getElementById('sync-btn');
   if(btn)btn.textContent='Syncing...';
   try{
@@ -2296,12 +2304,18 @@ async function manualSync(){
       fetch('/api/activities',{headers:{'Authorization':'Bearer '+token}}),
       fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}})
     ]);
-    if(dr.ok)deals=await dr.json();
+    if(!dr.ok){throw new Error('Deals API returned '+dr.status);}
+    deals=await dr.json();
     if(ar.ok)acts=await ar.json();
     if(lr.ok)liLeads=await lr.json();
     saveLocal();renderAll();
+    showConnected();
     showToast('Synced from cloud ✓','ok');
-  }catch(e){showToast('Sync failed — offline','err');}
+  }catch(e){
+    console.error('Sync error:',e);
+    showDisconnected();
+    showToast('Sync failed — '+e.message,'err');
+  }
   if(btn)btn.textContent='↻ Sync';
 }
 
