@@ -251,14 +251,16 @@ body.light .quick-log{background:#f4f4f5;}
 /* MODAL */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:200;align-items:center;justify-content:center;overflow-y:auto;padding:20px;}
 .mo.open{display:flex;}
-.mo-box{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;flex-shrink:0;}
+.mo-box{background:var(--s1);border:1px solid #2a2a2a;border-radius:var(--rl);width:600px;max-width:96vw;max-height:90vh;display:flex;flex-direction:column;flex-shrink:0;}
 .mo-box.wide{width:720px;}
-.mo-hd{padding:18px 20px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;}
+.mo-box .mo-body{flex:1;overflow-y:auto;padding:18px 20px;}
+.mo-box .mo-ft{position:sticky;bottom:0;background:var(--s1);border-top:1px solid var(--b1);padding:12px 20px 16px;display:flex;gap:8px;justify-content:flex-end;z-index:2;}
+.mo-hd{padding:18px 20px 14px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--s1);z-index:2;}
 .mo-title{font-size:20px;font-family:var(--hd);letter-spacing:1px;font-weight:400;}
 .mo-close{background:none;border:none;color:var(--t3);font-size:18px;cursor:pointer;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
 .mo-close:hover{background:var(--s2);color:var(--tx);}
-.mo-body{padding:18px 20px;}
-.mo-ft{padding:12px 20px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid var(--b1);}
+.mo-body{}
+.mo-ft{}
 .fl{margin-bottom:12px;}
 .fl2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
 .fl3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px;}
@@ -954,7 +956,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         </div>
       </div>
     </div>
-    <div class="sdiv" id="tl-section" style="display:none;">Activity Timeline <span style="font-size:11px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;">(full history)</span></div>
+      <div class="sdiv" id="tl-section" style="display:none;">Activity Timeline <span style="font-size:11px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;">(full history)</span></div>
       <div id="tl-list" style="display:none;max-height:240px;overflow-y:auto;"></div>
     </div>
     <div class="mo-ft">
