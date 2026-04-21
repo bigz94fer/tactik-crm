@@ -381,7 +381,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <div class="sb-sect">
       <div class="sb-lbl">Team</div>
       <div class="ni" onclick="nav('team',this)"><span class="ni-ic">◉</span>Team Performance</div>
-      <div class="ni" onclick="nav('linkedin',this)"><span class="ni-ic">↗</span>LinkedIn / VA Tracker</div>
+      <div class="ni" onclick="nav('linkedin',this)"><span class="ni-ic">📞</span>Cold Calls</div>
       <div class="ni" onclick="nav('eod',this)"><span class="ni-ic">◑</span>End of Day Report</div>
       <div class="ni" onclick="nav('calendar',this)"><span class="ni-ic">▦</span>Activity Calendar</div>
     </div>
@@ -675,22 +675,23 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       </div>
     </div>
 
-    <!-- LINKEDIN / VA TRACKER -->
+    <!-- COLD CALLS -->
     <div class="view" id="view-linkedin">
       <div class="mrow">
-        <div class="mc"><div class="mc-lbl">Total outreach</div><div class="mc-val" id="li-total">0</div></div>
-        <div class="mc"><div class="mc-lbl">Replied</div><div class="mc-val cg" id="li-replied">0</div></div>
-        <div class="mc"><div class="mc-lbl">Meeting booked</div><div class="mc-val ca" id="li-meet">0</div></div>
-        <div class="mc"><div class="mc-lbl">Converted to deal</div><div class="mc-val" id="li-conv">0</div></div>
+        <div class="mc"><div class="mc-lbl">Total Leads</div><div class="mc-val" id="li-total">0</div></div>
+        <div class="mc"><div class="mc-lbl">Called</div><div class="mc-val cg" id="li-replied">0</div></div>
+        <div class="mc"><div class="mc-lbl">Interested</div><div class="mc-val ca" id="li-meet">0</div></div>
+        <div class="mc"><div class="mc-lbl">Converted to Deal</div><div class="mc-val" id="li-conv">0</div></div>
       </div>
       <div class="tbl-toolbar">
-        <select class="si" style="width:140px;" id="li-sf" onchange="renderLinkedIn()">
+        <input class="si" id="li-search" placeholder="Search name, mobile, email..." style="flex:1;max-width:280px;" oninput="renderLinkedIn()">
+        <select class="si" style="width:150px;" id="li-sf" onchange="renderLinkedIn()">
           <option value="">All statuses</option>
-          <option>Connected</option><option>Replied</option><option>Interested</option><option>Meeting Booked</option><option>Converted</option><option>No Response</option><option>Dead</option>
+          <option>New</option><option>Called</option><option>Interested</option><option>Not Interested</option><option>No Answer</option><option>Call Back</option><option>Converted</option>
         </select>
-        <button class="btn btn-pr btn-sm" style="margin-left:auto;" onclick="openLiModal()">+ Log Outreach</button>
+        <button class="btn btn-pr btn-sm" style="margin-left:auto;" onclick="openLiModal()">+ Add Lead</button>
       </div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Name</th><th>Company</th><th>Title</th><th>Status</th><th>Message sent</th><th>Date</th><th>Notes</th><th></th></tr></thead><tbody id="li-body"></tbody></table></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>First Name</th><th>Last Name</th><th>Mobile</th><th>Email</th><th>Website</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="li-body"></tbody></table></div>
     </div>
 
     <!-- END OF DAY REPORT -->
@@ -912,29 +913,20 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         </div>
       </div>
 
-      <div class="sdiv">Dates & timeline</div>
+      <div class="sdiv">Dates</div>
       <div class="fl3">
         <div><div class="flbl">Date contacted</div><input class="fi" id="f-dc" type="date"></div>
-        <div><div class="flbl">Follow-up date</div><input class="fi" id="f-nd" type="date"></div>
         <div><div class="flbl">Expected close</div><input class="fi" id="f-cd" type="date"></div>
-      </div>
-      <div class="fl2">
         <div><div class="flbl">Date closed</div><input class="fi" id="f-dateclosed" type="date"></div>
-        <div><div class="flbl">Days to close</div><input class="fi" id="f-dtc" type="number" placeholder="Auto-calculated" readonly style="opacity:.6;"></div>
       </div>
 
       <div class="sdiv">Next action</div>
       <div class="fl"><div class="flbl">Next action</div><input class="fi" id="f-na" placeholder="Send proposal, Follow up call, Book meeting..."></div>
+      <div class="fl2">
+        <div><div class="flbl">Follow-up date</div><input class="fi" id="f-nd" type="date"></div>
+        <div><div class="flbl">Follow-up time</div><input class="fi" id="f-nt" type="time" placeholder="10:00"></div>
+      </div>
 
-      <div class="sdiv">Proposal / Quote</div>
-      <div class="fl2">
-        <div><div class="flbl">Proposal status</div><select class="fi" id="f-prop-status"><option value="">None</option><option>Drafting</option><option>Sent</option><option>Viewed</option><option>Accepted</option><option>Rejected</option></select></div>
-        <div><div class="flbl">Proposal link</div><input class="fi" id="f-prop-link" placeholder="https://... or doc name"></div>
-      </div>
-      <div class="fl2">
-        <div><div class="flbl">Proposal sent date</div><input class="fi" id="f-prop-date" type="date"></div>
-        <div><div class="flbl">Quote value (AUD)</div><input class="fi" id="f-prop-value" type="number" placeholder="Auto-fill from deal value"></div>
-      </div>
       <div class="sdiv">Deal notes</div>
       <div class="fl"><div class="flbl">Overall notes</div><textarea class="fi" id="f-no" placeholder="Context, budget discussed, requirements, objections, background info..."></textarea></div>
 
@@ -993,25 +985,28 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   </div>
 </div>
 
-<!-- LINKEDIN MODAL -->
+<!-- COLD CALL LEAD MODAL -->
 <div class="mo" id="li-mo">
   <div class="mo-box">
-    <div class="mo-hd"><div class="mo-title">Log LinkedIn Outreach</div><button class="mo-close" onclick="closeLiM()">✕</button></div>
+    <div class="mo-hd"><div class="mo-title">Add Cold Call Lead</div><button class="mo-close" onclick="closeLiM()">✕</button></div>
     <div class="mo-body">
       <div class="fl2">
-        <div><div class="flbl">Full name</div><input class="fi" id="li-name" placeholder="Jane Smith"></div>
-        <div><div class="flbl">Company</div><input class="fi" id="li-co" placeholder="Acme Legal"></div>
+        <div><div class="flbl">First Name</div><input class="fi" id="li-fname" placeholder="John"></div>
+        <div><div class="flbl">Last Name</div><input class="fi" id="li-lname" placeholder="Smith"></div>
       </div>
       <div class="fl2">
-        <div><div class="flbl">Job title</div><input class="fi" id="li-title" placeholder="Director / Owner"></div>
-        <div><div class="flbl">Status</div><select class="fi" id="li-status"><option>Connected</option><option>Replied</option><option>Interested</option><option>Meeting Booked</option><option>Converted</option><option>No Response</option><option>Dead</option></select></div>
+        <div><div class="flbl">Mobile</div><input class="fi" id="li-mobile" placeholder="04XX XXX XXX"></div>
+        <div><div class="flbl">Email</div><input class="fi" id="li-email" placeholder="john@company.com"></div>
       </div>
-      <div class="fl"><div class="flbl">Message sent</div><textarea class="fi" id="li-msg" placeholder="Paste the LinkedIn message you sent..."></textarea></div>
+      <div class="fl2">
+        <div><div class="flbl">Website Link</div><input class="fi" id="li-website" placeholder="https://company.com.au"></div>
+        <div><div class="flbl">Status</div><select class="fi" id="li-status"><option>New</option><option>Called</option><option>Interested</option><option>Not Interested</option><option>No Answer</option><option>Call Back</option></select></div>
+      </div>
       <div class="fl2">
         <div><div class="flbl">Date</div><input class="fi" id="li-date" type="date"></div>
         <div><div class="flbl">VA / Rep</div><select class="fi" id="li-rep"><option>VA</option><option>Udara</option><option>Naman</option></select></div>
       </div>
-      <div class="fl"><div class="flbl">Notes</div><input class="fi" id="li-notes" placeholder="Their response, next step..."></div>
+      <div class="fl"><div class="flbl">Notes</div><textarea class="fi" id="li-notes" placeholder="Call notes, next step..."></textarea></div>
     </div>
     <div class="mo-ft"><button class="btn btn-gh" onclick="closeLiM()">Cancel</button><button class="btn btn-pr" onclick="saveLi()">Save</button></div>
   </div>
@@ -1092,7 +1087,7 @@ const SBADGE={Lead:'bld',Qualified:'bq','Proposal Sent':'bp',Negotiation:'bn',Wo
 const OUTCL={Won:'out-won',Lost:'out-lost',Pending:'out-pend','No Response':'out-nr',Nurturing:'out-nurt'};
 const ACTCL={Call:'ti-call','Follow-up':'ti-fu',Email:'ti-fu',Proposal:'ti-prop',Meeting:'ti-meet',LinkedIn:'ti-meet'};
 const ACTIC={Call:'📞','Follow-up':'🔁',Email:'✉',Proposal:'📄',Meeting:'👥',LinkedIn:'↗'};
-const LISTATUS={Connected:'li-conn',Replied:'li-int',Interested:'li-int','Meeting Booked':'li-meet',Converted:'bw','No Response':'li-dead',Dead:'li-dead'};
+const LISTATUS={'New':'li-conn','Called':'li-rep','Interested':'li-int','Not Interested':'li-dead','No Answer':'li-dead','Call Back':'li-meet','Converted':'bw'};
 const REP_COLORS={Udara:'#4f8ef7',Naman:'#2dd36f',VA:'#ffb347',Other:'#a78bfa'};
 
 function pc(p){return p>=75?'var(--gr)':p>=50?'var(--ac)':p>=25?'var(--am)':' var(--rd)';}
@@ -1279,13 +1274,13 @@ function nav(v,el){
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   el.classList.add('active');
-  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'LinkedIn / VA Tracker',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports',forecast:'Weekly Forecast'};
+  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'Cold Calls',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports',forecast:'Weekly Forecast'};
   document.getElementById('ttl').textContent=T[v]||v;
   if(v==='analytics')setTimeout(renderAnalytics,50);if(v==='forecast')setTimeout(renderForecast,50);
   if(v==='calendar')setTimeout(renderCalendar,50);
   const btn=document.getElementById('add-btn');
   if(v==='activities'){btn.textContent='+ Log Activity';btn.onclick=openActModal;}
-  else if(v==='linkedin'){btn.textContent='+ Log Outreach';btn.onclick=openLiModal;}
+  else if(v==='linkedin'){btn.textContent='+ Add Lead';btn.onclick=openLiModal;}
   else{btn.textContent='+ Add Deal';btn.onclick=openAddDeal;}
 }
 
@@ -1671,14 +1666,16 @@ function renderTeam(){
 // ─── LINKEDIN TRACKER ─────────────────────────────────────────────────────────
 function renderLinkedIn(){
   const sf=(document.getElementById('li-sf')||{value:''}).value;
-  const filtered=liLeads.filter(l=>!sf||l.status===sf);
+  const q=((document.getElementById('li-search')||{}).value||'').toLowerCase().trim();
+  let filtered=liLeads.filter(l=>!sf||l.status===sf);
+  if(q){filtered=filtered.filter(l=>((l.firstName||'')+(l.lastName||'')+(l.name||'')+(l.mobile||'')+(l.email||'')+(l.website||'')+(l.notes||'')).toLowerCase().includes(q));}
   document.getElementById('li-total').textContent=liLeads.length;
-  document.getElementById('li-replied').textContent=liLeads.filter(l=>['Replied','Interested','Meeting Booked','Converted'].includes(l.status)).length;
-  document.getElementById('li-meet').textContent=liLeads.filter(l=>l.status==='Meeting Booked').length;
+  document.getElementById('li-replied').textContent=liLeads.filter(l=>['Called','Interested','Call Back','Converted'].includes(l.status)).length;
+  document.getElementById('li-meet').textContent=liLeads.filter(l=>l.status==='Interested').length;
   document.getElementById('li-conv').textContent=liLeads.filter(l=>l.status==='Converted').length;
   const tb=document.getElementById('li-body');
-  if(!filtered.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--t3);">No outreach logged yet — click + Log Outreach to start</td></tr>';return;}
-  tb.innerHTML=filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>`<tr><td style="font-weight:500;">${l.name}</td><td>${l.company}</td><td style="color:var(--t2);font-size:12px;">${l.title||'—'}</td><td><span class="li-status ${LISTATUS[l.status]||'li-dead'}">${l.status}</span></td><td style="font-size:12px;color:var(--t2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.message||'—'}</td><td style="font-family:var(--mo);font-size:12px;color:var(--t3);">${fd(l.date)}</td><td style="font-size:12px;color:var(--t2);">${l.notes||'—'}</td><td><button class="complete-btn" onclick="updLiStatus('${l.id}')" style="font-size:10px;">Update</button></td></tr>`).join('');
+  if(!filtered.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--t3);">No cold call leads yet — click + Add Lead to start</td></tr>';return;}
+  tb.innerHTML=filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>{const fn=l.firstName||(l.name||'').split(' ')[0]||'';const ln=l.lastName||(l.name||'').split(' ').slice(1).join(' ')||'';return`<tr><td style="font-weight:500;">${fn}</td><td>${ln}</td><td style="font-family:var(--mo);font-size:12px;">${l.mobile||'—'}</td><td style="font-size:12px;color:var(--t2);">${l.email||'—'}</td><td style="font-size:12px;color:var(--t2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.website||'—'}</td><td><span class="li-status ${LISTATUS[l.status]||'li-dead'}">${l.status}</span></td><td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.notes||'—'}</td><td style="white-space:nowrap;"><button class="complete-btn" onclick="updLiStatus('${l.id}')" style="font-size:10px;margin-right:4px;">${l.status}</button><button class="complete-btn" onclick="convertToDeal('${l.id}')" style="font-size:10px;background:var(--ac);color:#fff;">→ Deal</button></td></tr>`;}).join('');
 }
 
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
@@ -1958,19 +1955,52 @@ function saveAct(){
 function markDone(id){const a=acts.find(x=>x.id===id);if(a){a.status='Done';a.completedAt=today();}save();renderAll();showToast('Done ✓','ok');}
 
 // ─── LINKEDIN CRUD ────────────────────────────────────────────────────────────
-function openLiModal(){document.getElementById('li-mo').classList.add('open');}
+function openLiModal(){
+  document.getElementById('li-fname').value='';
+  document.getElementById('li-lname').value='';
+  document.getElementById('li-mobile').value='';
+  document.getElementById('li-email').value='';
+  document.getElementById('li-website').value='';
+  document.getElementById('li-status').value='New';
+  document.getElementById('li-date').value=today();
+  document.getElementById('li-rep').value='VA';
+  document.getElementById('li-notes').value='';
+  document.getElementById('li-mo').classList.add('open');
+}
 function closeLiM(){document.getElementById('li-mo').classList.remove('open');}
 function saveLi(){
-  const name=document.getElementById('li-name').value.trim();if(!name){showToast('Enter a name','err');return;}
-  liLeads.push({id:'li_'+Date.now(),name,company:document.getElementById('li-co').value.trim(),title:document.getElementById('li-title').value.trim(),status:document.getElementById('li-status').value,message:document.getElementById('li-msg').value.trim(),date:document.getElementById('li-date').value,rep:document.getElementById('li-rep').value,notes:document.getElementById('li-notes').value.trim()});
-  const liRec=liLeads[liLeads.length-1];save();closeLiM();renderLinkedIn();showToast('Outreach logged ✓','ok');
+  const firstName=document.getElementById('li-fname').value.trim();
+  const lastName=document.getElementById('li-lname').value.trim();
+  if(!firstName&&!lastName){showToast('Enter a name','err');return;}
+  const name=firstName+(lastName?' '+lastName:'');
+  const mobile=document.getElementById('li-mobile').value.trim();
+  const email=document.getElementById('li-email').value.trim();
+  const website=document.getElementById('li-website').value.trim();
+  liLeads.push({id:'li_'+Date.now(),name,firstName,lastName,mobile,email,website,company:'',title:mobile,status:document.getElementById('li-status').value,message:email,date:document.getElementById('li-date').value,rep:document.getElementById('li-rep').value,notes:document.getElementById('li-notes').value.trim()});
+  const liRec=liLeads[liLeads.length-1];save();closeLiM();renderLinkedIn();showToast('Lead added ✓','ok');
 }
 function updLiStatus(id){
   const l=liLeads.find(x=>x.id===id);if(!l)return;
-  const opts=['Connected','Replied','Interested','Meeting Booked','Converted','No Response','Dead'];
+  const opts=['New','Called','Interested','Not Interested','No Answer','Call Back','Converted'];
   const cur=opts.indexOf(l.status);
   const next=opts[(cur+1)%opts.length];
   l.status=next;save();renderLinkedIn();showToast('Status: '+next,'ok');
+}
+
+function convertToDeal(id){
+  const l=liLeads.find(x=>x.id===id);if(!l)return;
+  if(l.status==='Converted'){showToast('Already converted','err');return;}
+  const fn=l.firstName||(l.name||'').split(' ')[0]||'';
+  const ln=l.lastName||(l.name||'').split(' ').slice(1).join(' ')||'';
+  const contact=(fn+' '+ln).trim()||l.name||'';
+  const website=l.website||'';
+  let company=l.company||'';
+  if(!company&&website){try{company=new URL(website.startsWith('http')?website:'https://'+website).hostname.replace('www.','');}catch(e){company=website;}}
+  if(!company)company=contact;
+  const newDeal={id:'d_'+Date.now(),company,contact,phone:l.mobile||'',email:l.email||'',value:0,stage:'Lead',enquiryType:'Website Design',source:'Cold Call',outcome:'Pending',prob:10,brand:'Tactik',owner:l.rep||'Udara',dateContacted:l.date||today(),followUpDate:'',followUpNum:0,dateClosed:'',daysToClose:0,nextAction:'Follow up',nextActionDate:today(),closeDate:'',notes:l.notes||'',website,createdAt:today(),updatedAt:today(),callLog:[]};
+  deals.push(newDeal);
+  l.status='Converted';
+  save();renderLinkedIn();renderPipeline();showToast('Moved to pipeline ✓','ok');
 }
 
 // ─── CSV IMPORT ────────────────────────────────────────────────────────────────
