@@ -947,7 +947,11 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
             <div><div class="flbl">Type</div><select class="fi" id="ql-type"><option>Call</option><option>Follow-up</option><option>Email</option><option>Meeting</option><option>Left VM</option><option>LinkedIn</option><option>Proposal</option></select></div>
             <div><div class="flbl">Rep</div><select class="fi" id="ql-rep"><option>Udara</option><option>Naman</option><option>VA</option></select></div>
           </div>
-          <div class="fl"><div class="flbl">What happened? <span style="color:var(--t3);font-weight:400;">(your call note)</span></div><textarea class="fi" id="ql-note" placeholder="e.g. Spoke to owner, keen on website — sending proposal EOD. Call back Thursday." style="min-height:80px;"></textarea></div>
+          <div class="fl"><div class="flbl">What happened? <span style="color:var(--t3);font-weight:400;">(your call note)</span></div><textarea class="fi" id="ql-note" placeholder="e.g. Spoke to owner, keen on website — sending proposal EOD." style="min-height:80px;"></textarea></div>
+          <div class="fl2" style="margin-top:8px;">
+            <div><div class="flbl">Next step</div><select class="fi" id="ql-next"><option value="">— no next step —</option><option>Call back</option><option>Send proposal</option><option>Follow up email</option><option>Book meeting</option><option>Send quote</option><option>Check in</option><option>Revisit later</option></select></div>
+            <div><div class="flbl">Follow-up date</div><input class="fi" id="ql-nextdate" type="date"></div>
+          </div>
           <div class="fl2">
             <div><div class="flbl">Date</div><input class="fi" id="ql-date" type="date"></div>
             <div style="display:flex;align-items:flex-end;"><button class="btn btn-pr" style="width:100%;justify-content:center;" onclick="saveCallLog()">Save note</button></div>
@@ -1807,6 +1811,7 @@ function renderCallLog(d){
         <span class="cl-date">${fd(e.date)} ${e.time||''}</span>
       </div>
       <div class="cl-note">${e.note}</div>
+      ${e.nextAction?'<div style="margin-top:4px;font-size:12px;color:var(--am);">\u2192 Next: '+e.nextAction+(e.nextActionDate?' — '+fd(e.nextActionDate):'')+'</div>':''}
     </div>`).join('')+ '</div>';
 }
 function toggleQuickLog(){document.getElementById('quick-log').classList.toggle('open');}
@@ -1816,18 +1821,33 @@ function saveCallLog(){
   const deal=deals.find(x=>x.id===editId);if(!deal)return;
   if(!deal.callLog)deal.callLog=[];
   const now=new Date();
+  const nextAction=document.getElementById('ql-next').value;
+  const nextDate=document.getElementById('ql-nextdate').value;
   deal.callLog.push({
     id:'cl_'+Date.now(),
     date:today(),
     time:now.toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'}),
     rep:document.getElementById('ql-rep').value,
     type:document.getElementById('ql-type').value,
-    note
+    note,
+    nextAction:nextAction||'',
+    nextActionDate:nextDate||''
   });
   deal.followUpNum=(deal.followUpNum||0)+1;
   document.getElementById('f-fnum').value=deal.followUpNum;
-  save();renderCallLog(deal);
+  // Update deal's next action + date from call log
+  if(nextAction){
+    deal.nextAction=nextAction;
+    document.getElementById('f-na').value=nextAction;
+  }
+  if(nextDate){
+    deal.nextActionDate=nextDate;
+    document.getElementById('f-nd').value=nextDate;
+  }
+  save();renderCallLog(deal);updateOverdueBanner();
   document.getElementById('ql-note').value='';
+  document.getElementById('ql-next').value='';
+  document.getElementById('ql-nextdate').value='';
   document.getElementById('quick-log').classList.remove('open');
   showToast('Call note saved ✓','ok');
 }
