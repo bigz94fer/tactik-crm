@@ -167,6 +167,12 @@ export async function onRequest(context) {
       if (path === '/api/deals/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.deals)) return jsonResp({ error: 'deals array required' }, 400, request);
+        // Delete deals not in the bulk payload (full sync)
+        const incomingIds = body.deals.map(d => d.id).filter(Boolean);
+        if (incomingIds.length > 0) {
+          const placeholders = incomingIds.map(() => '?').join(',');
+          await env.DB.prepare(`DELETE FROM deals WHERE id NOT IN (${placeholders})`).bind(...incomingIds).run();
+        }
         let inserted = 0, updated = 0;
         for (const d of body.deals) {
           const id = d.id || ('d_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
@@ -273,6 +279,11 @@ export async function onRequest(context) {
       if (path === '/api/activities/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.activities)) return jsonResp({ error: 'activities array required' }, 400, request);
+        const incomingActIds = body.activities.map(a => a.id).filter(Boolean);
+        if (incomingActIds.length > 0) {
+          const ph = incomingActIds.map(() => '?').join(',');
+          await env.DB.prepare(`DELETE FROM activities WHERE id NOT IN (${ph})`).bind(...incomingActIds).run();
+        }
         let inserted = 0;
         for (const a of body.activities) {
           const id = a.id || ('act_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
@@ -299,6 +310,11 @@ export async function onRequest(context) {
       if (path === '/api/li-leads/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.leads)) return jsonResp({ error: 'leads array required' }, 400, request);
+        const incomingLiIds = body.leads.map(l => l.id).filter(Boolean);
+        if (incomingLiIds.length > 0) {
+          const ph = incomingLiIds.map(() => '?').join(',');
+          await env.DB.prepare(`DELETE FROM li_leads WHERE id NOT IN (${ph})`).bind(...incomingLiIds).run();
+        }
         let inserted = 0;
         for (const l of body.leads) {
           const id = l.id || ('li_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
