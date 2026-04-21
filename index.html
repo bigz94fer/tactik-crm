@@ -1069,6 +1069,7 @@ function toggleSidebar(){
   const sb=document.getElementById('sidebar');
   const tg=document.getElementById('sb-toggle');
   sb.classList.toggle('collapsed');
+  localStorage.setItem('tcrm3_sb',sb.classList.contains('collapsed')?'1':'0');
   tg.innerHTML=sb.classList.contains('collapsed')?'☰':'✕';
 }
 // ─── SEED DATA ────────────────────────────────────────────────────────────────
@@ -1132,6 +1133,11 @@ async function init(){
     // Load li leads
     try{const lr=await fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}});if(lr.ok)liLeads=await lr.json();}catch(e){}
     saveLocal();
+    // Restore sidebar state (default collapsed on mobile)
+    const sbState=localStorage.getItem('tcrm3_sb');
+    const sb=document.getElementById('sidebar');
+    const tg=document.getElementById('sb-toggle');
+    if(sbState==='1'||(sbState===null&&window.innerWidth<900)){sb.classList.add('collapsed');if(tg)tg.innerHTML='☰';}
     renderAll();
     showToast(deals.length+' deals loaded from cloud ✓','ok');
     showConnected();
