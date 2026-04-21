@@ -2892,6 +2892,9 @@ function loadTheme(){
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),3000);}
 
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
+
+// Register service worker for aggressive cache-busting
+if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(()=>{});}
 init();
 </script>
 </body>
