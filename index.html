@@ -945,6 +945,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <div class="fl2" style="margin-top:8px;">
             <div><div class="flbl">Next step</div><select class="fi" id="ql-next"><option value="">— no next step —</option><option>Call back</option><option>Send proposal</option><option>Follow up email</option><option>Book meeting</option><option>Send quote</option><option>Check in</option><option>Revisit later</option></select></div>
             <div><div class="flbl">Follow-up date</div><input class="fi" id="ql-nextdate" type="date"></div>
+            <div><div class="flbl">Follow-up time</div><input class="fi" id="ql-nexttime" type="time"></div>
           </div>
           <div class="fl2">
             <div><div class="flbl">Date</div><input class="fi" id="ql-date" type="date"></div>
@@ -1093,6 +1094,7 @@ const REP_COLORS={Udara:'#4f8ef7',Naman:'#2dd36f',VA:'#ffb347',Other:'#a78bfa'};
 function pc(p){return p>=75?'var(--gr)':p>=50?'var(--ac)':p>=25?'var(--am)':' var(--rd)';}
 function fmt(n){return '$'+Math.round(n||0).toLocaleString();}
 function fd(d){if(!d)return'';try{return new Date(d+'T00:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});}catch{return d;}}
+function fmtTime(t){if(!t)return'';const[h,m]=t.split(':');const hr=parseInt(h);const ampm=hr>=12?'pm':'am';const h12=hr%12||12;return h12+':'+m+' '+ampm;}
 function today(){return new Date().toISOString().split('T')[0];}
 function thisMonth(){return new Date().toISOString().slice(0,7);}
 
@@ -1562,7 +1564,7 @@ function dCard(d){
     </div>
     ${rot&&rot.status==='rotten'?`<div class="rotten-tag">⚠ Rotten · ${rot.days}d no contact</div>`:''}
     ${rot&&rot.status==='warning'?`<div class="warn-tag">⏱ ${rot.days}d since contact</div>`:''}
-    ${d.nextAction&&!rot?`<div class="dc-next" style="color:${isOD?'var(--rd)':'var(--t3)'}">◇ ${d.nextAction}${d.nextActionDate?' · '+fd(d.nextActionDate):''}</div>`:''}
+    ${d.nextAction&&!rot?`<div class="dc-next" style="color:${isOD?'var(--rd)':'var(--t3)'}">◇ ${d.nextAction}${d.nextActionDate?' · '+fd(d.nextActionDate)+(d.nextActionTime?' '+fmtTime(d.nextActionTime):''):''}</div>`:''}
   </div>`;
 }
 
@@ -1750,7 +1752,7 @@ function openAddDeal(){
   document.getElementById('f-cd').value='';
   document.getElementById('f-dc').value=today();
   document.getElementById('f-dateclosed').value='';
-  document.getElementById('f-dtc').value='';
+  document.getElementById('f-nt').value='';
   document.getElementById('f-fnum').value='';
   document.getElementById('f-prob').value=10;updP();
   document.getElementById('cl-section').style.display='none';
@@ -1778,18 +1780,14 @@ function editDeal(id){
   document.getElementById('f-owner').value=d.owner||'Udara';
   document.getElementById('f-na').value=d.nextAction||'';
   document.getElementById('f-nd').value=d.nextActionDate||'';
+  document.getElementById('f-nt').value=d.nextActionTime||'';
   document.getElementById('f-cd').value=d.closeDate||'';
   document.getElementById('f-dc').value=d.dateContacted||'';
   document.getElementById('f-dateclosed').value=d.dateClosed||'';
-  document.getElementById('f-dtc').value=d.daysToClose||'';
   document.getElementById('f-fnum').value=d.followUpNum||'';
   document.getElementById('f-no').value=d.notes||'';
   document.getElementById('f-win-reason').value=d.winReason||'';
   document.getElementById('f-loss-reason').value=d.lossReason||'';
-  document.getElementById('f-prop-status').value=d.proposalStatus||'';
-  document.getElementById('f-prop-link').value=d.proposalLink||'';
-  document.getElementById('f-prop-date').value=d.proposalDate||'';
-  document.getElementById('f-prop-value').value=d.proposalValue||d.value||'';
   outcomeChg();
   document.getElementById('f-prob').value=d.prob!=null?d.prob:DEF_PROB[d.stage||'Lead'];
   updP();
@@ -1817,7 +1815,7 @@ function renderCallLog(d){
         <span class="cl-date">${fd(e.date)} ${e.time||''}</span>
       </div>
       <div class="cl-note">${e.note}</div>
-      ${e.nextAction?'<div style="margin-top:4px;font-size:12px;color:var(--am);">\u2192 Next: '+e.nextAction+(e.nextActionDate?' — '+fd(e.nextActionDate):'')+'</div>':''}
+      ${e.nextAction?'<div style="margin-top:4px;font-size:12px;color:var(--am);">\u2192 Next: '+e.nextAction+(e.nextActionDate?' — '+fd(e.nextActionDate)+(e.nextActionTime?' '+fmtTime(e.nextActionTime):''):'')+'</div>':''}
     </div>`).join('')+ '</div>';
 }
 function toggleQuickLog(){document.getElementById('quick-log').classList.toggle('open');}
@@ -1829,6 +1827,7 @@ function saveCallLog(){
   const now=new Date();
   const nextAction=document.getElementById('ql-next').value;
   const nextDate=document.getElementById('ql-nextdate').value;
+  const nextTime=document.getElementById('ql-nexttime').value;
   deal.callLog.push({
     id:'cl_'+Date.now(),
     date:today(),
@@ -1837,7 +1836,8 @@ function saveCallLog(){
     type:document.getElementById('ql-type').value,
     note,
     nextAction:nextAction||'',
-    nextActionDate:nextDate||''
+    nextActionDate:nextDate||'',
+    nextActionTime:nextTime||''
   });
   deal.followUpNum=(deal.followUpNum||0)+1;
   document.getElementById('f-fnum').value=deal.followUpNum;
@@ -1849,6 +1849,10 @@ function saveCallLog(){
   if(nextDate){
     deal.nextActionDate=nextDate;
     document.getElementById('f-nd').value=nextDate;
+  }
+  if(nextTime){
+    deal.nextActionTime=nextTime;
+    document.getElementById('f-nt').value=nextTime;
   }
   save();renderCallLog(deal);updateOverdueBanner();
   document.getElementById('ql-note').value='';
@@ -1893,6 +1897,7 @@ function saveDeal(){
     prob:parseInt(document.getElementById('f-prob').value)||0,
     nextAction:document.getElementById('f-na').value.trim(),
     nextActionDate:document.getElementById('f-nd').value,
+    nextActionTime:document.getElementById('f-nt').value,
     closeDate:document.getElementById('f-cd').value,
     dateContacted:dcVal,
     dateClosed:dclosedVal,
@@ -1901,11 +1906,7 @@ function saveDeal(){
     notes:document.getElementById('f-no').value.trim(),
     winReason:document.getElementById('f-win-reason').value,
     lossReason:document.getElementById('f-loss-reason').value,
-    proposalStatus:document.getElementById('f-prop-status').value,
-    proposalLink:document.getElementById('f-prop-link').value.trim(),
-    proposalDate:document.getElementById('f-prop-date').value,
-    proposalValue:parseFloat(document.getElementById('f-prop-value').value)||0,
-    callLog:existing.callLog||[],
+    callLog:existing.callLog||[],,
     valueHistory:existing.valueHistory||[],
     stageHistory:existing.stageHistory||[],
     createdAt:existing.createdAt||today(),
