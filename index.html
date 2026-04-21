@@ -338,6 +338,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         <div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#555;font-weight:500;margin-bottom:5px;">Password</div>
         <input id="login-pass" type="password" class="fi" placeholder="••••••" style="width:100%;" onkeydown="if(event.key==='Enter')doLogin()">
       </div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#888;cursor:pointer;margin-bottom:16px;"><input type="checkbox" id="login-remember" checked> Stay signed in</label>
       <button id="login-btn" class="btn btn-pr" style="width:100%;justify-content:center;padding:10px;" onclick="doLogin()">Sign in</button>
       <div id="login-setup" style="display:none;margin-top:12px;">
         <div style="font-size:11px;color:#555;text-align:center;">First time? Create admin account:</div>
@@ -1104,6 +1105,8 @@ function thisMonth(){return new Date().toISOString().slice(0,7);}
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 async function init(){
   loadTheme();
+  const savedUser=localStorage.getItem('tcrm3_user');
+  if(savedUser)document.getElementById('login-user').value=savedUser;
   const now=new Date();
   document.getElementById('tsub').textContent=now.toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('f-nd').value=today();
@@ -1178,6 +1181,7 @@ async function doLogin(){
     const data=await res.json();
     if(res.ok&&data.token){
       localStorage.setItem('tcrm3_token',data.token);
+      if(document.getElementById('login-remember').checked){localStorage.setItem('tcrm3_user',u);}else{localStorage.removeItem('tcrm3_user');}
       API_TOKEN=data.token;
       document.getElementById('login-overlay').style.display='none';
       await init();
