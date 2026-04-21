@@ -1905,15 +1905,13 @@ function saveDeal(){
   }
   
   if(editId)deals=deals.map(x=>x.id===editId?d:x);else deals.push(d);
-  syncRecord(d,'deals');closeDM();renderAll();updateOverdueBanner();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
+  save();apiSaveDeal(d);closeDM();renderAll();updateOverdueBanner();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
 }
 function delDeal(){
   if(!editId)return;const d=deals.find(x=>x.id===editId);
   if(!confirm('Delete "'+( d?d.company:'this deal')+'"?'))return;
   deals=deals.filter(x=>x.id!==editId);acts=acts.filter(a=>a.dealId!==editId);
-  saveLocal();
-  // D1 delete handled by apiDeleteDeal
-  closeDM();renderAll();showToast('Deleted','');
+  save();apiDeleteDeal(editId);closeDM();renderAll();showToast('Deleted','');
 }
 
 // ─── ACTIVITY CRUD ────────────────────────────────────────────────────────────
@@ -1926,9 +1924,9 @@ function closeAM(){document.getElementById('act-mo').classList.remove('open');}
 function saveAct(){
   const did=document.getElementById('a-deal').value;if(!did){showToast('Select a deal','err');return;}
   const a={id:'a_'+Date.now(),type:document.getElementById('a-type').value,dealId:did,rep:document.getElementById('a-rep').value,note:document.getElementById('a-note').value.trim(),dueDate:document.getElementById('a-date').value,status:document.getElementById('a-stat').value,createdAt:today()};
-  acts.push(a);syncRecord(a,'activities');closeAM();renderAll();showToast('Activity logged ✓','ok');
+  acts.push(a);save();closeAM();renderAll();showToast('Activity logged ✓','ok');
 }
-function markDone(id){const a=acts.find(x=>x.id===id);if(a){a.status='Done';a.completedAt=today();syncRecord(a,'activities');}renderAll();showToast('Done ✓','ok');}
+function markDone(id){const a=acts.find(x=>x.id===id);if(a){a.status='Done';a.completedAt=today();}save();renderAll();showToast('Done ✓','ok');}
 
 // ─── LINKEDIN CRUD ────────────────────────────────────────────────────────────
 function openLiModal(){document.getElementById('li-mo').classList.add('open');}
@@ -1936,7 +1934,7 @@ function closeLiM(){document.getElementById('li-mo').classList.remove('open');}
 function saveLi(){
   const name=document.getElementById('li-name').value.trim();if(!name){showToast('Enter a name','err');return;}
   liLeads.push({id:'li_'+Date.now(),name,company:document.getElementById('li-co').value.trim(),title:document.getElementById('li-title').value.trim(),status:document.getElementById('li-status').value,message:document.getElementById('li-msg').value.trim(),date:document.getElementById('li-date').value,rep:document.getElementById('li-rep').value,notes:document.getElementById('li-notes').value.trim()});
-  const liRec=liLeads[liLeads.length-1];syncRecord(liRec,'linkedin_leads');closeLiM();renderLinkedIn();showToast('Outreach logged ✓','ok');
+  const liRec=liLeads[liLeads.length-1];save();closeLiM();renderLinkedIn();showToast('Outreach logged ✓','ok');
 }
 function updLiStatus(id){
   const l=liLeads.find(x=>x.id===id);if(!l)return;
