@@ -2133,7 +2133,7 @@ function checkDuplicate(company, excludeId){
 // ═══════════════════════════════════════════════════════════════
 function updateOverdueBanner(){
   const td=today();
-  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.nextActionDate&&d.nextActionDate<td);
+  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.stage!=='On Hold'&&d.nextActionDate&&d.nextActionDate<td);
   const banner=document.getElementById('overdue-banner');
   const text=document.getElementById('overdue-text');
   if(!banner||!text)return;
@@ -2207,7 +2207,7 @@ function renderForecast(){
   const active=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost');
   const pipeVal=active.reduce((s,d)=>s+(d.value||0),0);
   const wtdVal=active.reduce((s,d)=>s+(d.value||0)*(d.prob||0)/100,0);
-  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.nextActionDate&&d.nextActionDate<td);
+  const overdue=deals.filter(d=>d.stage!=='Won'&&d.stage!=='Lost'&&d.stage!=='On Hold'&&d.nextActionDate&&d.nextActionDate<td);
   const stale=getStaleDeals();
   
   // Summary cards
@@ -2463,6 +2463,14 @@ function renderEOD(){
     const deal=deals.find(d=>d.id===a.dealId);
     if(deal&&!entries.find(e=>e.dealId===a.dealId&&e.type===a.type&&e.note===a.note)){
       entries.push({id:a.id,date:eodDate,time:'',rep:a.rep||'—',type:a.type,note:a.note||'',dealId:a.dealId,company:deal.company,contact:deal.contact||'—',stage:deal.stage,value:deal.value||0});
+    }
+  });
+
+  // Auto-add "New deal" contact entries for deals created today
+  const newDealContacts=deals.filter(d=>d.createdAt===eodDate&&(!repFilter||d.owner===repFilter));
+  newDealContacts.forEach(d=>{
+    if(!entries.find(e=>e.dealId===d.id)){
+      entries.push({id:d.id,date:eodDate,time:'',rep:d.owner||'Udara',type:'New deal',note:'Added to pipeline'+(d.source?' from '+d.source:''),dealId:d.id,company:d.company,contact:d.contact||'—',stage:d.stage,value:d.value||0,enquiryType:d.enquiryType});
     }
   });
 
