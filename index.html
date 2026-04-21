@@ -545,11 +545,12 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <!-- TODAY'S FOCUS -->
     <div class="view" id="view-focus">
       <div class="mrow">
-        <div class="mc"><div class="mc-lbl">Tasks today</div><div class="mc-val" id="f-tasks">0</div>      <div style="margin-top:16px;" id="focus-stale"></div></div>
+        <div class="mc"><div class="mc-lbl">Tasks today</div><div class="mc-val" id="f-tasks">0</div></div>
         <div class="mc"><div class="mc-lbl">Overdue</div><div class="mc-val cr" id="f-od">0</div></div>
         <div class="mc"><div class="mc-lbl">Deals to call</div><div class="mc-val ca" id="f-calls">0</div></div>
         <div class="mc"><div class="mc-lbl">Follow-ups</div><div class="mc-val" id="f-fus">0</div></div>
       </div>
+      <div id="focus-debug" style="font-size:11px;color:var(--t3);padding:4px 8px;background:var(--s2);border-radius:4px;margin-bottom:8px;display:none;"></div>
       <div class="card" style="margin-bottom:14px;">
         <div class="card-title">Priority call list <span id="focus-count">0 tasks</span></div>
         <div id="focus-list"></div>
@@ -1425,6 +1426,7 @@ function renderCEO(){
 
 // ─── TODAY'S FOCUS ────────────────────────────────────────────────────────────
 function renderFocus(){
+try{
   const td=today();
   // Build task list from activities + deal-level follow-ups
   const actTasks=acts.filter(a=>a.status!=='Done'&&a.dueDate&&a.dueDate<=td).map(a=>({id:a.id,type:a.type,company:(deals.find(d=>d.id===a.dealId)||{}).company||a.dealId,dueDate:a.dueDate,note:a.note,rep:a.rep,source:'activity'}));
@@ -1438,6 +1440,10 @@ function renderFocus(){
   document.getElementById('f-calls').textContent=calls.length;
   document.getElementById('f-fus').textContent=fus.length;
   document.getElementById('focus-count').textContent=tasks.length+' tasks';
+  // Debug
+  const dbg=document.getElementById('focus-debug');
+  if(dbg){dbg.style.display='';dbg.textContent='Debug: '+deals.length+' deals | '+acts.length+' acts | actTasks='+actTasks.length+' dealTasks='+dealTasks.length+' total='+tasks.length;}
+  console.log('renderFocus: deals='+deals.length+' acts='+acts.length+' actTasks='+actTasks.length+' dealTasks='+dealTasks.length+' tasks='+tasks.length);
 
   const fl=document.getElementById('focus-list');
   fl.innerHTML=tasks.length?tasks.map(a=>{
@@ -1467,7 +1473,9 @@ function renderFocus(){
     if(stale.length){
       staleEl.innerHTML='<div style="font-size:14px;font-weight:500;margin-bottom:8px;color:var(--am);">⏳ Stale Deals (14+ days no contact)</div>'+stale.sort((a,b)=>b.staleDays-a.staleDays).map(d=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:rgba(255,193,7,.06);border:1px solid rgba(255,193,7,.15);border-radius:6px;margin-bottom:4px;font-size:13px;"><div><span style="font-weight:500;">'+d.company+'</span><span style="color:var(--t3);"> · '+d.staleDays+'d stale · '+d.stage+'</span></div><div style="display:flex;gap:6px;"><button class="btn btn-gh btn-sm" onclick="nudgeStale(\''+d.id+'\')">Nudge</button><button class="btn btn-gh btn-sm" style="color:var(--rd);border-color:rgba(255,82,82,.3);" onclick="markStaleLost(\''+d.id+'\')">Mark Lost</button></div></div>').join('');
     }else{staleEl.innerHTML='';}
-  }}
+  }
+}catch(e){console.error('renderFocus error:',e);document.getElementById('focus-list').innerHTML='<div style="color:var(--rd);padding:20px;">Error: '+e.message+'</div>';}
+}
 
 // ─── PIPELINE ─────────────────────────────────────────────────────────────────
 function rottenStatus(deal){
