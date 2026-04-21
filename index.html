@@ -1268,7 +1268,7 @@ function saveLocal(){
 }
 function save(){saveLocal();apiSave();}
 
-function renderAll(){updateOverdueBanner();renderCEO();renderFocus();renderPipeline();renderContacts();renderActivities();renderTeam();renderLinkedIn();renderReports();updateBadges();}
+function renderAll(){try{updateOverdueBanner();}catch(e){console.error('renderAll:overdue',e);}try{renderCEO();}catch(e){console.error('renderAll:ceo',e);}try{renderFocus();}catch(e){console.error('renderAll:focus',e);}try{renderPipeline();}catch(e){console.error('renderAll:pipeline',e);}try{renderContacts();}catch(e){console.error('renderAll:contacts',e);}try{renderActivities();}catch(e){console.error('renderAll:activities',e);}try{renderTeam();}catch(e){console.error('renderAll:team',e);}try{renderLinkedIn();}catch(e){console.error('renderAll:linkedin',e);}try{renderReports();}catch(e){console.error('renderAll:reports',e);}try{updateBadges();}catch(e){console.error('renderAll:badges',e);}}
 
 // ─── NAVIGATION ───────────────────────────────────────────────────────────────
 function nav(v,el){
@@ -1747,7 +1747,8 @@ function openAddDeal(){
   document.getElementById('f-src').value='Networking';
   document.getElementById('f-out').value='Pending';
   document.getElementById('f-brand').value='Tactik';
-  document.getElementById('f-owner').value='Udara';
+  const rf=(document.getElementById('pipe-rep')||{}).value||'';
+  document.getElementById('f-owner').value=rf||'Udara';
   document.getElementById('f-nd').value=today();
   document.getElementById('f-cd').value='';
   document.getElementById('f-dc').value=today();
@@ -1932,7 +1933,7 @@ function saveDeal(){
   }
   
   if(editId)deals=deals.map(x=>x.id===editId?d:x);else deals.push(d);
-  save();apiSaveDeal(d);closeDM();renderAll();updateOverdueBanner();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
+  save();closeDM();renderAll();updateOverdueBanner();showToast(editId?'Deal updated ✓':'Deal added ✓','ok');
 }
 function delDeal(){
   if(!editId)return;const d=deals.find(x=>x.id===editId);
