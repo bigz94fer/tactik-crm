@@ -2776,13 +2776,13 @@ function renderCalendar(){
     const dateStr=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dayActs=actMap[dateStr]||[];
     const isToday=dateStr===todayStr;
-    const isWeekend=((startDow+d-1)%7)>=5;
+    const dayOfWeek=new Date(calYear,calMonth,d).getDay();const isWeekend=(dayOfWeek===0||dayOfWeek===6);
     const hasActs=dayActs.length>0;
 
     const repColors={Udara:'#F44302',Naman:'#22c55e',VA:'#ffb347'};
     const dots=[...new Set(dayActs.map(a=>a.rep).filter(Boolean))].map(r=>`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${repColors[r]||'var(--ac)'};margin-right:2px;"></span>`).join('');
 
-    cells+=`<div style="min-height:80px;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:6px;cursor:${hasActs?'pointer':'default'};background:${isToday?'rgba(244,67,2,.08)':isWeekend?'#090909':'transparent'};transition:background .15s;"
+    cells+=`<div style="min-height:80px;border-right:1px solid var(--b1);border-bottom:1px solid var(--b1);padding:6px;cursor:${hasActs?'pointer':'default'};background:${isToday?'rgba(244,67,2,.08)':isWeekend?'var(--s1)':'transparent'};transition:background .15s;"
       ${hasActs?`onclick="showCalDay('${dateStr}')"`:''} 
       onmouseover="if(${hasActs})this.style.background='rgba(244,67,2,.1)'"
       onmouseout="this.style.background='${isToday?'rgba(244,67,2,.08)':isWeekend?'var(--s1)':'transparent'}'">
