@@ -393,7 +393,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
   <div style="font-size:10px;color:var(--t3);text-align:center;padding:8px;opacity:0.5;">v2026.04.21b</div>
 <div class="sb-bot">
     <div class="sb-action" onclick="openImport()"><span style="font-size:13px;">⬆</span><span>Import CSV</span></div>
-    <div class="sb-action" onclick="manualSync()"><span style="font-size:13px;">↻</span><span>Sync from cloud</span></div>
+
     <div class="sb-action" onclick="openSettings()" id="db-status-btn">
       <span class="sdot on" id="sdot"></span>
       <span id="stxt" style="flex:1;">Settings</span>
@@ -409,7 +409,7 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
     <div class="tb-info"><div class="tb-title" id="ttl">CEO Dashboard</div><div class="tb-sub" id="tsub"></div></div>
     <div class="tb-right">
       <button class="btn btn-gh btn-sm" onclick="toggleTheme()" id="theme-btn" style="font-size:14px;">☀</button>
-      <button class="btn btn-gh btn-sm" onclick="manualSync()" id="sync-btn">↻ Sync</button>
+
       <button class="btn btn-pr btn-sm" id="add-btn" onclick="openAddDeal()">+ Add Deal</button>
     </div>
   </div>
@@ -1080,7 +1080,6 @@ const SEED_DEALS = [{"id": "d_0_0", "company": "Pay Lion", "contact": "Steven An
 let deals=[],acts=[],liLeads=[],editId=null,actFilt='all',csvRows=[],csvHeaders=[];
 let rottenDays={Lead:3,Qualified:5,'Proposal Sent':7,Negotiation:10,Won:0,Lost:0,'On Hold':14,'Final Follow Up':5};
 let revenueChart=null;
-let isSyncing=false;
 
 const MONTHLY_TARGET=30000,BREAKEVEN=20000;
 const STAGES=['Lead','Qualified','Proposal Sent','Negotiation','Final Follow Up','On Hold','Won','Lost'];
@@ -2293,37 +2292,8 @@ async
 
 
 
-async function manualSync(){
-  const token=localStorage.getItem('tcrm3_token');
-  if(!token){showToast('Not connected — sign in first','err');showDisconnected();return;}
-  const btn=document.getElementById('sync-btn');
-  if(btn)btn.textContent='Syncing...';
-  try{
-    const [dr,ar,lr]=await Promise.all([
-      fetch('/api/deals',{headers:{'Authorization':'Bearer '+token}}),
-      fetch('/api/activities',{headers:{'Authorization':'Bearer '+token}}),
-      fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}})
-    ]);
-    if(!dr.ok){throw new Error('Deals API returned '+dr.status);}
-    deals=await dr.json();
-    if(ar.ok)acts=await ar.json();
-    if(lr.ok)liLeads=await lr.json();
-    saveLocal();renderAll();
-    showConnected();
-    showToast('Synced from cloud ✓','ok');
-  }catch(e){
-    console.error('Sync error:',e);
-    showDisconnected();
-    showToast('Sync failed — '+e.message,'err');
-  }
-  if(btn)btn.textContent='↻ Sync';
-}
+// Auto-sync removed — all saves push to D1 automatically
 
-// Auto-sync every 60 seconds when connected
-// Auto-sync removed - manual sync only
-
-
-// Push single record after every change
 
 
 
