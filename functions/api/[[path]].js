@@ -152,6 +152,8 @@ export async function onRequest(context) {
           body.nextActionDate||'', body.closeDate||'', body.notes||'',
           body.createdAt||now, body.updatedAt||now
         ).run();
+        // Audit log
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'create', 'deals', id, JSON.stringify({company: body.company, value: body.value, stage: body.stage}), auth.user.username || '').run();
         if (body.callLog) {
           await env.DB.prepare('DELETE FROM call_log WHERE deal_id = ?').bind(id).run();
           for (const cl of body.callLog) {
@@ -167,13 +169,11 @@ export async function onRequest(context) {
       if (path === '/api/deals/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.deals)) return jsonResp({ error: 'deals array required' }, 400, request);
-        // Delete deals not in the bulk payload (full sync)
-        const incomingIds = body.deals.map(d => d.id).filter(Boolean);
-        if (incomingIds.length > 0) {
-          const placeholders = incomingIds.map(() => '?').join(',');
-          await env.DB.prepare(`DELETE FROM deals WHERE id NOT IN (${placeholders})`).bind(...incomingIds).run();
-        }
+        // SAFETY: No prune on bulk sync — only upsert. Explicit DELETE /api/deals/:id for removals.
+        // Previous prune logic caused data loss when empty arrays were sent.
         let inserted = 0, updated = 0;
+        // Audit log — bulk sync
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'bulk_sync', 'deals', 'batch', JSON.stringify({count: body.deals.length}), auth.user.username || '').run();
         for (const d of body.deals) {
           const id = d.id || ('d_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
           const existing = await env.DB.prepare('SELECT id FROM deals WHERE id = ?').bind(id).first();
@@ -230,6 +230,8 @@ export async function onRequest(context) {
           body.nextActionDate??'', body.closeDate??'', body.notes??'',
           now, body.id
         ).run();
+        // Audit log
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'update', 'deals', body.id, JSON.stringify({company: body.company, value: body.value, stage: body.stage}), auth.user.username || '').run();
         if (body.callLog && Array.isArray(body.callLog)) {
           await env.DB.prepare('DELETE FROM call_log WHERE deal_id = ?').bind(body.id).run();
           for (const cl of body.callLog) {
@@ -241,13 +243,116 @@ export async function onRequest(context) {
         return jsonResp({ success: true }, 200, request);
       }
 
-      // ─── DELETE /api/deals/:id ───
+      // ─── DELETE /api/deals/:id ─── (soft delete — moves to deleted_records for 30 days)
       const dealMatch = path.match(/^\/api\/deals\/([\w_]+)$/);
       if (dealMatch && method === 'DELETE') {
         const id = dealMatch[1];
+        // Archive the deal before deleting
+        const deal = await env.DB.prepare('SELECT * FROM deals WHERE id = ?').bind(id).first();
+        if (deal) {
+          const data = JSON.stringify(deal);
+          await env.DB.prepare('INSERT OR REPLACE INTO deleted_records (id, table_name, record_id, data, deleted_by, deleted_at, expires_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\', \'30 days\'))').bind('del_' + id, 'deals', id, data, auth.user.username || '').run();
+        }
+        // Archive call logs
+        const callLogs = await env.DB.prepare('SELECT * FROM call_log WHERE deal_id = ?').bind(id).all();
+        for (const cl of callLogs.results) {
+          await env.DB.prepare('INSERT OR REPLACE INTO deleted_records (id, table_name, record_id, data, deleted_by, deleted_at, expires_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\', \'30 days\'))').bind('del_' + cl.id, 'call_log', cl.id, JSON.stringify(cl), auth.user.username || '').run();
+        }
         await env.DB.prepare('DELETE FROM call_log WHERE deal_id = ?').bind(id).run();
         await env.DB.prepare('DELETE FROM deals WHERE id = ?').bind(id).run();
-        return jsonResp({ success: true }, 200, request);
+        // Audit log
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'delete', 'deals', id, data || '{}', auth.user.username || '').run();
+        return jsonResp({ success: true, message: 'Deal archived for 30 days' }, 200, request);
+      }
+
+      // ─── RESTORE /api/deals/:id/restore ───
+      const restoreMatch = path.match(/^\/api\/deals\/([\w_]+)\/restore$/);
+      if (restoreMatch && method === 'POST') {
+        const id = restoreMatch[1];
+        const archived = await env.DB.prepare('SELECT * FROM deleted_records WHERE record_id = ? AND table_name = ?').bind(id, 'deals').first();
+        if (!archived) return jsonResp({ error: 'No archived deal found' }, 404, request);
+        const deal = JSON.parse(archived.data);
+        await env.DB.prepare(`INSERT INTO deals (id, company, contact, phone, email, value, stage, enquiryType, source, outcome, prob, brand, owner, dateContacted, followUpDate, followUpNum, dateClosed, daysToClose, nextAction, nextActionDate, closeDate, notes, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+          deal.id, deal.company||'', deal.contact||'', deal.phone||'', deal.email||'',
+          deal.value||0, deal.stage||'Lead', deal.enquiryType||'Website Design',
+          deal.source||'Networking', deal.outcome||'Pending', deal.prob||10,
+          deal.brand||'Tactik', deal.owner||'Udara',
+          deal.dateContacted||'', deal.followUpDate||'', deal.followUpNum||0,
+          deal.dateClosed||'', deal.daysToClose||0, deal.nextAction||'',
+          deal.nextActionDate||'', deal.closeDate||'', deal.notes||'',
+          deal.createdAt||'', deal.updatedAt||''
+        ).run();
+        // Restore call logs too
+        const archivedCalls = await env.DB.prepare('SELECT * FROM deleted_records WHERE record_id LIKE ? AND table_name = ?').bind('cl_%', 'call_log').all();
+        // (call logs for this deal will need separate restore if needed)
+        await env.DB.prepare('DELETE FROM deleted_records WHERE record_id = ? AND table_name = ?').bind(id, 'deals').run();
+        // Audit log
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'restore', 'deals', id, JSON.stringify(deal), auth.user.username || '').run();
+        return jsonResp({ success: true, message: 'Deal restored' }, 200, request);
+      }
+
+      // ─── GET /api/deals/deleted ─── (list soft-deleted deals, recoverable)
+      if (path === '/api/deals/deleted' && method === 'GET') {
+        const results = await env.DB.prepare('SELECT * FROM deleted_records WHERE table_name = ? ORDER BY deleted_at DESC').bind('deals').all();
+        const deals = results.results.map(r => ({ ...r, data: JSON.parse(r.data) }));
+        return jsonResp(deals, 200, request);
+      }
+
+      // ─── GET /api/audit ─── (recent audit log)
+      if (path === '/api/audit' && method === 'GET') {
+        const limit = parseInt(url.searchParams.get('limit') || '100');
+        const results = await env.DB.prepare('SELECT * FROM audit_log ORDER BY created_at DESC LIMIT ?').bind(limit).all();
+        return jsonResp(results.results, 200, request);
+      }
+
+      // ─── GET /api/backup ─── (full data export for emergency restore)
+      if (path === '/api/backup' && method === 'GET') {
+        const deals = await env.DB.prepare('SELECT * FROM deals').all();
+        const callLogs = await env.DB.prepare('SELECT * FROM call_log').all();
+        const activities = await env.DB.prepare('SELECT * FROM activities').all();
+        const liLeads = await env.DB.prepare('SELECT * FROM li_leads').all();
+        const users = await env.DB.prepare('SELECT id, username, role, created_at FROM users').all();
+        const deleted = await env.DB.prepare('SELECT * FROM deleted_records').all();
+        const audit = await env.DB.prepare('SELECT * FROM audit_log ORDER BY created_at DESC LIMIT 500').all();
+        return jsonResp({
+          exported_at: new Date().toISOString(),
+          version: '2.4',
+          deals: deals.results,
+          call_log: callLogs.results,
+          activities: activities.results,
+          li_leads: liLeads.results,
+          users: users.results,
+          deleted_records: deleted.results,
+          audit_log: audit.results
+        }, 200, request);
+      }
+
+      // ─── POST /api/restore ─── (restore from backup JSON)
+      if (path === '/api/restore' && method === 'POST') {
+        const body = await request.json();
+        if (!body.deals || !Array.isArray(body.deals)) return jsonResp({ error: 'deals array required' }, 400, request);
+        let restored = 0;
+        for (const d of body.deals) {
+          const existing = await env.DB.prepare('SELECT id FROM deals WHERE id = ?').bind(d.id).first();
+          if (!existing) {
+            await env.DB.prepare(`INSERT INTO deals (id, company, contact, phone, email, value, stage, enquiryType, source, outcome, prob, brand, owner, dateContacted, followUpDate, followUpNum, dateClosed, daysToClose, nextAction, nextActionDate, closeDate, notes, createdAt, updatedAt)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(
+              d.id, d.company||'', d.contact||'', d.phone||'', d.email||'',
+              d.value||0, d.stage||'Lead', d.enquiryType||'Website Design',
+              d.source||'Networking', d.outcome||'Pending', d.prob||10,
+              d.brand||'Tactik', d.owner||'Udara',
+              d.dateContacted||'', d.followUpDate||'', d.followUpNum||0,
+              d.dateClosed||'', d.daysToClose||0, d.nextAction||'',
+              d.nextActionDate||'', d.closeDate||'', d.notes||'',
+              d.createdAt||'', d.updatedAt||''
+            ).run();
+            restored++;
+          }
+        }
+        // Audit log
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'restore_backup', 'deals', 'batch', JSON.stringify({restored, total: body.deals.length}), auth.user.username || '').run();
+        return jsonResp({ success: true, restored, skipped: body.deals.length - restored }, 200, request);
       }
 
       // ─── ACTIVITIES ───
@@ -279,11 +384,7 @@ export async function onRequest(context) {
       if (path === '/api/activities/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.activities)) return jsonResp({ error: 'activities array required' }, 400, request);
-        const incomingActIds = body.activities.map(a => a.id).filter(Boolean);
-        if (incomingActIds.length > 0) {
-          const ph = incomingActIds.map(() => '?').join(',');
-          await env.DB.prepare(`DELETE FROM activities WHERE id NOT IN (${ph})`).bind(...incomingActIds).run();
-        }
+        // SAFETY: No prune on activities bulk sync — only upsert.
         let inserted = 0;
         for (const a of body.activities) {
           const id = a.id || ('act_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
@@ -321,11 +422,7 @@ export async function onRequest(context) {
       if (path === '/api/li-leads/bulk' && method === 'POST') {
         const body = await request.json();
         if (!Array.isArray(body.leads)) return jsonResp({ error: 'leads array required' }, 400, request);
-        const incomingLiIds = body.leads.map(l => l.id).filter(Boolean);
-        if (incomingLiIds.length > 0) {
-          const ph = incomingLiIds.map(() => '?').join(',');
-          await env.DB.prepare(`DELETE FROM li_leads WHERE id NOT IN (${ph})`).bind(...incomingLiIds).run();
-        }
+        // SAFETY: No prune on li_leads bulk sync — only upsert.
         let inserted = 0;
         for (const l of body.leads) {
           const id = l.id || ('li_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));

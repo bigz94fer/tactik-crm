@@ -1,4 +1,4 @@
-<!-- TCRM v2.2 build 2026-04-21 -->
+<!-- TCRM v2.4 build 2026-04-23 -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tactik CRM · Sales System v2.2</title>
+<title>Tactik CRM · Sales System v2.4</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -394,8 +394,12 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div class="ni" onclick="nav('reports',this)"><span class="ni-ic">◻</span>Reports</div>
       <div class="ni" onclick="nav('forecast',this)"><span class="ni-ic">◐</span>Weekly Forecast</div>
     </div>
+    <div class="sb-sect">
+      <div class="sb-lbl">Recovery</div>
+      <div class="ni" onclick="nav('deleted',this)"><span class="ni-ic">♻</span>Deleted Deals<span class="ni-badge" id="delb" style="display:none;background:var(--rd);">0</span></div>
+    </div>
   </nav>
-  <div style="font-size:10px;color:var(--t3);text-align:center;padding:8px;opacity:0.5;">v2026.04.21b</div>
+  <div style="font-size:10px;color:var(--t3);text-align:center;padding:8px;opacity:0.5;">v2.4 build 2026-04-23</div>
 <div class="sb-bot">
     <div class="sb-action" onclick="openImport()"><span style="font-size:13px;">⬆</span><span>Import CSV</span></div>
 
@@ -852,6 +856,20 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
       <div id="fc-pipeline" style="margin-bottom:24px;"></div>
     </div>
 
+    <div class="view" id="view-deleted">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <div style="font-family:var(--hd);font-size:20px;letter-spacing:1px;">♻ Deleted Deals</div>
+          <div style="font-size:12px;color:var(--t3);margin-top:2px;">Recoverable for 30 days after deletion</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-gh btn-sm" onclick="loadDeletedDeals()">↻ Refresh</button>
+          <button class="btn btn-gh btn-sm" onclick="exportBackup()">⬇ Export Backup</button>
+        </div>
+      </div>
+      <div id="deleted-list">Loading...</div>
+    </div>
+
         <div class="mc"><div class="mc-lbl">Weighted forecast</div><div class="mc-val cg" id="r-wtd">$0</div></div>
         <div class="mc"><div class="mc-lbl">Avg deal size</div><div class="mc-val" id="r-avg">$0</div></div>
         <div class="mc"><div class="mc-lbl">Win rate</div><div class="mc-val ca" id="r-wr">0%</div></div>
@@ -1143,6 +1161,13 @@ async function init(){
     try{const ar=await fetch('/api/activities',{headers:{'Authorization':'Bearer '+token}});if(ar.ok)acts=await ar.json();}catch(e){}
     // Load li leads
     try{const lr=await fetch('/api/li-leads',{headers:{'Authorization':'Bearer '+token}});if(lr.ok)liLeads=await lr.json();}catch(e){}
+    // SAFETY: If cloud returns 0 deals but we have seed data, re-seed cloud
+    if(deals.length===0 && SEED_DEALS.length>0){
+      deals=SEED_DEALS;
+      saveLocal();
+      apiSave();
+      showToast(deals.length+' deals restored to cloud ✓','ok');
+    }
     saveLocal();
     // Restore sidebar state (default collapsed on mobile)
     const sbState=localStorage.getItem('tcrm3_sb');
@@ -1295,10 +1320,11 @@ function nav(v,el){
   document.querySelectorAll('.ni').forEach(x=>x.classList.remove('active'));
   document.getElementById('view-'+v).classList.add('active');
   el.classList.add('active');
-  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'Cold Calls',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports',forecast:'Weekly Forecast'};
+  const T={ceo:'CEO Dashboard',focus:'Today\'s Focus',pipeline:'Pipeline',contacts:'Contacts',activities:'Activities',team:'Team Performance',linkedin:'Cold Calls',eod:'End of Day Report',calendar:'Activity Calendar',analytics:'CEO Analytics',reports:'Reports',forecast:'Weekly Forecast',deleted:'Deleted Deals'};
   document.getElementById('ttl').textContent=T[v]||v;
   if(v==='analytics')setTimeout(renderAnalytics,50);if(v==='forecast')setTimeout(renderForecast,50);
   if(v==='calendar')setTimeout(renderCalendar,50);
+  if(v==='deleted')setTimeout(loadDeletedDeals,50);
   const btn=document.getElementById('add-btn');
   if(v==='activities'){btn.textContent='+ Log Activity';btn.onclick=openActModal;}
   else if(v==='linkedin'){btn.textContent='+ Add Lead';btn.onclick=openLiModal;}
@@ -2890,6 +2916,75 @@ function loadTheme(){
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
 function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast show '+(type||'');clearTimeout(window._tt);window._tt=setTimeout(()=>t.classList.remove('show'),3000);}
+
+// ─── DELETED DEALS / RECOVERY ───────────────────────────────────────────────────
+async function loadDeletedDeals(){
+  try{
+    const r=await apiFetch('/api/deals/deleted');
+    const data=await r.json();
+    const el=document.getElementById('deleted-list');
+    if(!data||data.length===0){
+      el.innerHTML='<div class="card" style="padding:40px;text-align:center;color:var(--t2);">No deleted deals found. Everything is safe! ♻</div>';
+      return;
+    }
+    // Update badge
+    const badge=document.getElementById('delb');
+    if(badge){badge.style.display='inline';badge.textContent=data.length;}
+    let html='<div class="card" style="padding:0;overflow:hidden;"><table class="tbl" style="width:100%;"><thead><tr><th>Company</th><th>Value</th><th>Stage</th><th>Deleted</th><th>Expires</th><th>Action</th></tr></thead><tbody>';
+    for(const d of data){
+      const deal=d.data||d;
+      const del=d.deleted_at||'';
+      const exp=d.expires_at||'';
+      html+=`<tr><td style="font-weight:600;">${deal.company||'Unknown'}</td><td>$${(deal.value||0).toLocaleString()}</td><td><span class="stage-tag" style="background:var(--s3);padding:2px 8px;border-radius:4px;font-size:11px;">${deal.stage||'Unknown'}</span></td><td style="font-size:12px;color:var(--t3);">${del.substring(0,10)}</td><td style="font-size:12px;color:var(--am);">${exp.substring(0,10)}</td><td><button class="btn btn-gh btn-sm" style="background:var(--gr);color:#fff;" onclick="restoreDeal('${d.record_id}')">♻ Restore</button></td></tr>`;
+    }
+    html+='</tbody></table></div>';
+    el.innerHTML=html;
+  }catch(e){
+    document.getElementById('deleted-list').innerHTML='<div class="card" style="padding:20px;color:var(--rd);">Error loading deleted deals: '+e.message+'</div>';
+  }
+}
+
+async function restoreDeal(id){
+  try{
+    const r=await apiFetch('/api/deals/'+id+'/restore',{method:'POST'});
+    const data=await r.json();
+    if(data.success){
+      showToast('Deal restored! ♻','');
+      loadDeletedDeals();
+      // Reload deals from server
+      const dr=await apiFetch('/api/deals');
+      if(dr.ok){deals=await dr.json();save();renderAll();}
+    }else{
+      showToast(data.error||'Restore failed','error');
+    }
+  }catch(e){
+    showToast('Error: '+e.message,'error');
+  }
+}
+
+async function exportBackup(){
+  try{
+    const r=await apiFetch('/api/backup');
+    const data=await r.json();
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='tactik-crm-backup-'+new Date().toISOString().split('T')[0]+'.json';
+    a.click();URL.revokeObjectURL(url);
+    showToast('Backup downloaded ✓','');
+  }catch(e){
+    showToast('Backup failed: '+e.message,'error');
+  }
+}
+
+// ─── AUDIT LOG (optional view in settings) ───────────────────────────────────────
+async function loadAuditLog(){
+  try{
+    const r=await apiFetch('/api/audit?limit=50');
+    const data=await r.json();
+    return data;
+  }catch(e){return[];}
+}
 
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
