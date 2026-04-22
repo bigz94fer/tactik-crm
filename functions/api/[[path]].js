@@ -249,9 +249,9 @@ export async function onRequest(context) {
         const id = dealMatch[1];
         // Archive the deal before deleting
         const deal = await env.DB.prepare('SELECT * FROM deals WHERE id = ?').bind(id).first();
+        const dealData = deal ? JSON.stringify(deal) : '{}';
         if (deal) {
-          const data = JSON.stringify(deal);
-          await env.DB.prepare('INSERT OR REPLACE INTO deleted_records (id, table_name, record_id, data, deleted_by, deleted_at, expires_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\', \'30 days\'))').bind('del_' + id, 'deals', id, data, auth.user.username || '').run();
+          await env.DB.prepare('INSERT OR REPLACE INTO deleted_records (id, table_name, record_id, data, deleted_by, deleted_at, expires_at) VALUES (?, ?, ?, ?, ?, datetime(\'now\'), datetime(\'now\', \'30 days\'))').bind('del_' + id, 'deals', id, dealData, auth.user.username || '').run();
         }
         // Archive call logs
         const callLogs = await env.DB.prepare('SELECT * FROM call_log WHERE deal_id = ?').bind(id).all();
@@ -261,7 +261,7 @@ export async function onRequest(context) {
         await env.DB.prepare('DELETE FROM call_log WHERE deal_id = ?').bind(id).run();
         await env.DB.prepare('DELETE FROM deals WHERE id = ?').bind(id).run();
         // Audit log
-        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'delete', 'deals', id, data || '{}', auth.user.username || '').run();
+        await env.DB.prepare('INSERT INTO audit_log (id, action, table_name, record_id, data, username, created_at) VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))').bind('audit_' + Date.now(), 'delete', 'deals', id, dealData, auth.user.username || '').run();
         return jsonResp({ success: true, message: 'Deal archived for 30 days' }, 200, request);
       }
 
