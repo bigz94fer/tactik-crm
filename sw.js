@@ -1,27 +1,34 @@
-// Force no-cache for the CRM
+// TCRM v2.6 - Aggressive cache bust
+const CACHE_VERSION = 'tcrm-v2.6-' + Date.now();
+
 self.addEventListener('install', (e) => {
   self.skipWaiting();
+  e.waitUntil(caches.keys().then(names => 
+    Promise.all(names.map(n => caches.delete(n)))
+  ));
 });
 
 self.addEventListener('activate', (e) => {
-  e.waitUntil(clients.claim());
+  e.waitUntil(
+    caches.keys().then(names => 
+      Promise.all(names.map(n => caches.delete(n)))
+    ).then(() => clients.claim())
+  );
 });
 
 self.addEventListener('fetch', (e) => {
   e.respondWith(
-    fetch(e.request, { cache: 'no-store', headers: { 'Cache-Control': 'no-cache' } })
+    fetch(e.request, { cache: 'no-store' })
       .then(response => {
-        const newHeaders = new Headers(response.headers);
-        newHeaders.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-        newHeaders.set('Pragma', 'no-cache');
-        newHeaders.set('Expires', '0');
-        const modifiedResponse = new Response(response.body, {
+        const nr = new Response(response.body, {
           status: response.status,
           statusText: response.statusText,
-          headers: newHeaders
+          headers: response.headers
         });
-        return modifiedResponse;
+        nr.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        nr.headers.set('Pragma', 'no-cache');
+        return nr;
       })
-      .catch(() => new Response('Offline', { status: 503 }))
+      .catch(() => fetch(e.request))
   );
 });
