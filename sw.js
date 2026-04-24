@@ -1,5 +1,5 @@
 // TCRM v2.6 - Aggressive cache bust
-const CACHE_VERSION = 'tcrm-v2.7-' + Date.now();
+const CACHE_VERSION = 'tcrm-v2.8-' + Date.now();
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();
