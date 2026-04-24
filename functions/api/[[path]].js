@@ -405,6 +405,7 @@ export async function onRequest(context) {
         if (!colNames.includes('mobile')) await env.DB.prepare('ALTER TABLE li_leads ADD COLUMN mobile TEXT DEFAULT \'\'').run();
         if (!colNames.includes('email')) await env.DB.prepare('ALTER TABLE li_leads ADD COLUMN email TEXT DEFAULT \'\'').run();
         if (!colNames.includes('website')) await env.DB.prepare('ALTER TABLE li_leads ADD COLUMN website TEXT DEFAULT \'\'').run();
+        if (!colNames.includes('gmb')) await env.DB.prepare('ALTER TABLE li_leads ADD COLUMN gmb TEXT DEFAULT \'\'').run();
       } catch (migrateErr) { /* ignore if columns already exist */ }
 
       if (path === '/api/li-leads' && method === 'GET') {
@@ -414,8 +415,8 @@ export async function onRequest(context) {
       if (path === '/api/li-leads' && method === 'POST') {
         const body = await request.json();
         const id = body.id || ('li_' + Date.now());
-        await env.DB.prepare('INSERT INTO li_leads (id, name, company, title, status, message, date, rep, notes, created_at, firstName, lastName, mobile, email, website) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
-          id, body.name||'', body.company||'', body.title||'', body.status||'New', body.message||'', body.date||'', body.rep||'VA', body.notes||'', new Date().toISOString(), body.firstName||'', body.lastName||'', body.mobile||'', body.email||'', body.website||'').run();
+        await env.DB.prepare('INSERT INTO li_leads (id, name, company, title, status, message, date, rep, notes, created_at, firstName, lastName, mobile, email, website, gmb) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
+          id, body.name||'', body.company||'', body.title||'', body.status||'New', body.message||'', body.date||'', body.rep||'VA', body.notes||'', new Date().toISOString(), body.firstName||'', body.lastName||'', body.mobile||'', body.email||'', body.website||'', body.gmb||'').run();
         return jsonResp({ success: true, id }, 200, request);
       }
       // ─── POST /api/li-leads/bulk ───
@@ -426,8 +427,8 @@ export async function onRequest(context) {
         let inserted = 0;
         for (const l of body.leads) {
           const id = l.id || ('li_' + Date.now() + '_' + Math.random().toString(36).slice(2,6));
-          await env.DB.prepare('INSERT OR REPLACE INTO li_leads (id, name, company, title, status, message, date, rep, notes, created_at, firstName, lastName, mobile, email, website) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
-            id, l.name||'', l.company||'', l.title||'', l.status||'New', l.message||'', l.date||'', l.rep||'VA', l.notes||'', l.created_at||new Date().toISOString(), l.firstName||'', l.lastName||'', l.mobile||'', l.email||'', l.website||'').run();
+          await env.DB.prepare('INSERT OR REPLACE INTO li_leads (id, name, company, title, status, message, date, rep, notes, created_at, firstName, lastName, mobile, email, website, gmb) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)').bind(
+            id, l.name||'', l.company||'', l.title||'', l.status||'New', l.message||'', l.date||'', l.rep||'VA', l.notes||'', l.created_at||new Date().toISOString(), l.firstName||'', l.lastName||'', l.mobile||'', l.email||'', l.website||'', l.gmb||'').run();
           inserted++;
         }
         return jsonResp({ success: true, inserted }, 200, request);
@@ -436,8 +437,8 @@ export async function onRequest(context) {
       if (path === '/api/li-leads' && method === 'PUT') {
         const body = await request.json();
         if (!body.id) return jsonResp({ error: 'id required' }, 400, request);
-        await env.DB.prepare('UPDATE li_leads SET name=?, company=?, title=?, status=?, message=?, date=?, rep=?, notes=?, firstName=?, lastName=?, mobile=?, email=?, website=? WHERE id=?').bind(
-          body.name||'', body.company||'', body.title||'', body.status||'New', body.message||'', body.date||'', body.rep||'VA', body.notes||'', body.firstName||'', body.lastName||'', body.mobile||'', body.email||'', body.website||'', body.id).run();
+        await env.DB.prepare('UPDATE li_leads SET name=?, company=?, title=?, status=?, message=?, date=?, rep=?, notes=?, firstName=?, lastName=?, mobile=?, email=?, website=?, gmb=? WHERE id=?').bind(
+          body.name||'', body.company||'', body.title||'', body.status||'New', body.message||'', body.date||'', body.rep||'VA', body.notes||'', body.firstName||'', body.lastName||'', body.mobile||'', body.email||'', body.website||'', body.gmb||'', body.id).run();
         return jsonResp({ success: true }, 200, request);
       }
       const liMatch = path.match(/^\/api\/li-leads\/([\w_]+)$/);
