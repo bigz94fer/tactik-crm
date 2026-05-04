@@ -703,7 +703,27 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
         </select>
         <button class="btn btn-pr btn-sm" style="margin-left:auto;" onclick="openLiModal()">+ Add Lead</button>
       </div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>First Name</th><th>Last Name</th><th>Mobile</th><th>Email</th><th>Website</th><th>GMB</th><th>Status</th><th>Notes</th><th>Actions</th></tr></thead><tbody id="li-body"></tbody></table></div>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>First Name</th><th>Last Name</th><th>Mobile</th><th>Email</th><th>Website</th><th>GMB</th><th>Status</th><th>Notes</th><th style="white-space:nowrap;">Log Call</th><th>Actions</th></tr></thead><tbody id="li-body"></tbody></table></div>
+      <!-- Cold Call Log Modal -->
+      <div class="mo" id="cold-call-log-mo">
+        <div class="mo-c" style="max-width:480px;">
+          <div class="mo-h">
+            <h3 class="mo-t" id="ccl-title">Log Cold Call</h3>
+            <button class="mo-x" onclick="closeColdCallLog()">×</button>
+          </div>
+          <div class="mo-b">
+            <div class="fi-row"><label class="flbl">Date</label><input type="date" class="fi" id="ccl-date"></div>
+            <div class="fi-row"><label class="flbl">Outcome</label><select class="fi" id="ccl-type"><option value="Cold Call">Cold Call - No Answer</option><option value="Cold Call - Busy">Busy</option><option value="Cold Call - Wrong Number">Wrong Number</option><option value="Cold Call - Interested">Interested</option><option value="Cold Call - Not Interested">Not Interested</option><option value="Cold Call - Callback">Call Back</option></select></div>
+            <div class="fi-row"><label class="flbl">Notes</label><textarea class="fi" id="ccl-note" rows="3" placeholder="What happened on the call..."></textarea></div>
+            <div class="fi-row"><label class="flbl">Next Step</label><input type="text" class="fi" id="ccl-next" placeholder="e.g. Call back Tuesday 3pm"></div>
+            <div class="fi-row"><label class="flbl">Rep</label><select class="fi" id="ccl-rep"><option>Udara</option><option>Naman</option><option>VA</option></select></div>
+          </div>
+          <div class="mo-f">
+            <button class="btn btn-gh" onclick="closeColdCallLog()">Cancel</button>
+            <button class="btn btn-pr" onclick="saveColdCallLog()">Save Call Log</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- END OF DAY REPORT -->
@@ -1308,6 +1328,22 @@ async function apiSaveDeal(deal){
   }catch(e){console.error('API save deal error:',e);return false;}
 }
 
+async function apiSaveLead(lead){
+  const token=localStorage.getItem('tcrm3_token');
+  if(!token)return false;
+  try{
+    const res=await fetch('/api/li-leads',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(lead)});
+    return res.ok;
+  }catch(e){console.error('API save lead error:',e);return false;}
+}
+
+async function saveLead(lead){
+  // Save to localStorage
+  localStorage.setItem('tcrm3_li',JSON.stringify(liLeads));
+  // Save to API
+  return await apiSaveLead(lead);
+}
+
 async function apiDeleteDeal(id){
   const token=localStorage.getItem('tcrm3_token');
   if(!token)return;
@@ -1730,8 +1766,58 @@ function renderLinkedIn(){
   document.getElementById('li-meet').textContent=liLeads.filter(l=>l.status==='Interested').length;
   document.getElementById('li-conv').textContent=liLeads.filter(l=>l.status==='Converted').length;
   const tb=document.getElementById('li-body');
-  if(!filtered.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;padding:36px;color:var(--t3);">No cold call leads yet — click + Add Lead to start</td></tr>';return;}
-  tb.innerHTML=filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>{const fn=l.firstName||(l.name||'').split(' ')[0]||'';const ln=l.lastName||(l.name||'').split(' ').slice(1).join(' ')||'';return`<tr><td style="font-weight:500;">${fn}</td><td>${ln}</td><td style="font-family:var(--mo);font-size:12px;">${l.mobile||'—'}</td><td style="font-size:12px;color:var(--t2);">${l.email||'—'}</td><td style="font-size:12px;color:var(--t2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.website?`<a href="https://${l.website}" target="_blank" style="color:var(--ac);text-decoration:none;">${l.website}</a>`:'—'}</td><td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.gmb?`<a href="${l.gmb}" target="_blank" style="color:var(--ac);text-decoration:none;">🗺️ GMB</a>`:'—'}</td><td><span class="li-status ${LISTATUS[l.status]||'li-dead'}">${l.status}</span></td><td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.notes||'—'}</td><td style="white-space:nowrap;"><button class="complete-btn" onclick="updLiStatus('${l.id}')" style="font-size:10px;margin-right:4px;">${l.status}</button><button class="complete-btn" onclick="convertToDeal('${l.id}')" style="font-size:10px;background:var(--ac);color:#fff;">→ Deal</button></td></tr>`;}).join('');
+  if(!filtered.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:36px;color:var(--t3);">No cold call leads yet — click + Add Lead to start</td></tr>';return;}
+  tb.innerHTML=filtered.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(l=>{const fn=l.firstName||(l.name||'').split(' ')[0]||'';const ln=l.lastName||(l.name||'').split(' ').slice(1).join(' ')||'';return`<tr><td style="font-weight:500;">${fn}</td><td>${ln}</td><td style="font-family:var(--mo);font-size:12px;">${l.mobile||'—'}</td><td style="font-size:12px;color:var(--t2);">${l.email||'—'}</td><td style="font-size:12px;color:var(--t2);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.website?`<a href="https://${l.website}" target="_blank" style="color:var(--ac);text-decoration:none;">${l.website}</a>`:'—'}</td><td style="font-size:12px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.gmb?`<a href="${l.gmb}" target="_blank" style="color:var(--ac);text-decoration:none;">🗺️ GMB</a>`:'—'}</td><td><span class="li-status ${LISTATUS[l.status]||'li-dead'}">${l.status}</span></td><td style="font-size:12px;color:var(--t2);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.notes||'—'}</td><td style="white-space:nowrap;"><button class="complete-btn" onclick="openColdCallLog('${l.id}')" title="Log call attempt" style="font-size:10px;margin-right:4px;background:var(--pu);color:#fff;">📞</button><button class="complete-btn" onclick="updLiStatus('${l.id}')" style="font-size:10px;margin-right:4px;">${l.status}</button><button class="complete-btn" onclick="convertToDeal('${l.id}')" style="font-size:10px;background:var(--ac);color:#fff;">→ Deal</button></td></tr>`;}).join('');
+}
+
+// ─── COLD CALL LOG MODAL ──────────────────────────────────────────────────────
+let coldCallLogId=null;
+function openColdCallLog(id){
+  const l=liLeads.find(x=>x.id===id);if(!l)return;
+  coldCallLogId=id;
+  document.getElementById('ccl-title').textContent='Log Call: '+(l.firstName||'')+' '+(l.lastName||'');
+  document.getElementById('ccl-date').value=today();
+  document.getElementById('ccl-type').value='Cold Call';
+  document.getElementById('ccl-note').value='';
+  document.getElementById('ccl-next').value='';
+  document.getElementById('cold-call-log-mo').classList.add('open');
+}
+function closeColdCallLog(){document.getElementById('cold-call-log-mo').classList.remove('open');coldCallLogId=null;}
+async function saveColdCallLog(){
+  if(!coldCallLogId)return;
+  const date=document.getElementById('ccl-date').value;
+  const type=document.getElementById('ccl-type').value;
+  const note=document.getElementById('ccl-note').value.trim();
+  const next=document.getElementById('ccl-next').value.trim();
+  const rep=document.getElementById('ccl-rep').value||'Udara';
+  if(!note){showToast('Enter call notes','err');return;}
+
+  const l=liLeads.find(x=>x.id===coldCallLogId);
+  if(!l)return;
+
+  // Update lead status based on call outcome
+  let newStatus=l.status||'New';
+  if(type==='No Answer')newStatus='Called';
+  if(type==='Busy')newStatus='Called';
+  if(type==='Interested')newStatus='Interested';
+  if(type==='Not Interested')newStatus='Not Interested';
+  if(type==='Call Back')newStatus='Call Back';
+  l.status=newStatus;
+  if(next)l.notes=(l.notes||'')+' | Next: '+next;
+
+  // Add to activities
+  const actNote=(type?'['+type+'] ':'')+note+(next?' | Next: '+next:'');
+  const act={id:'a_'+Date.now(),dealId:l.id,dealName:(l.firstName||'')+' '+(l.lastName||''),type:'Cold Call',date:date,rep:rep,note:actNote,status:'Done',createdAt:date,updatedAt:date};
+  acts.push(act);
+
+  // Save lead
+  await saveLead(l);
+  // Save activity
+  try{await fetch('/api/activities',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(act)});}catch(e){}
+
+  renderActivities();renderLinkedIn();
+  closeColdCallLog();
+  showToast('Call logged ✓','ok');
 }
 
 // ─── REPORTS ─────────────────────────────────────────────────────────────────
@@ -1998,14 +2084,38 @@ function delDeal(){
 
 // ─── ACTIVITY CRUD ────────────────────────────────────────────────────────────
 function openActModal(){
-  document.getElementById('a-deal').innerHTML=deals.map(d=>`<option value="${d.id}">${d.company}</option>`).join('');
+  // Populate deal selector with both deals AND cold call leads
+  let options=deals.map(d=>`<option value="${d.id}">[Deal] ${d.company}</option>`).join('');
+  if(liLeads.length>0)options+='<optgroup label="Cold Call Leads">'+liLeads.map(l=>{
+    const fn=l.firstName||'';const ln=l.lastName||'';const name=(fn+' '+ln).trim()||l.name||'';
+    return`<option value="${l.id}">[Lead] ${name}</option>`;
+  }).join('')+'</optgroup>';
+  document.getElementById('a-deal').innerHTML=options;
   document.getElementById('a-note').value='';document.getElementById('a-date').value=today();document.getElementById('a-stat').value='Pending';
   document.getElementById('act-mo').classList.add('open');
 }
 function closeAM(){document.getElementById('act-mo').classList.remove('open');}
 function saveAct(){
-  const did=document.getElementById('a-deal').value;if(!did){showToast('Select a deal','err');return;}
+  const did=document.getElementById('a-deal').value;if(!did){showToast('Select a deal or lead','err');return;}
+  
+  // Check if this is a cold call lead or a deal
+  const lead=liLeads.find(l=>l.id===did);
+  const deal=deals.find(d=>d.id===did);
+  
   const a={id:'a_'+Date.now(),type:document.getElementById('a-type').value,dealId:did,rep:document.getElementById('a-rep').value,note:document.getElementById('a-note').value.trim(),dueDate:document.getElementById('a-date').value,status:document.getElementById('a-stat').value,createdAt:today()};
+  
+  if(lead){
+    a.dealName=(lead.firstName||'')+' '+(lead.lastName||'');
+    // Update lead status based on activity type
+    const actType=a.type;
+    if(actType==='Call')lead.status='Called';
+    if(actType==='Email')lead.status='Called';
+    if(actType==='Follow-up')lead.status='Call Back';
+    saveLead(lead);
+  } else if(deal){
+    a.dealName=deal.company;
+  }
+  
   acts.push(a);save();closeAM();renderAll();showToast('Activity logged ✓','ok');
 }
 function markDone(id){const a=acts.find(x=>x.id===id);if(a){a.status='Done';a.completedAt=today();}save();renderAll();showToast('Done ✓','ok');}
