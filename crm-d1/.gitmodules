@@ -1,0 +1,3 @@
+[submodule "ai-hub"]
+	path = ai-hub
+	url = https://github.com/bigz94fer/ai-hub.git
