@@ -3069,7 +3069,8 @@ async function restoreDeal(id){
 
 async function exportBackup(){
   try{
-    const r=await apiFetch('/api/backup');
+    const token=localStorage.getItem('tcrm3_token');
+    const r=await fetch('/api/backup',{headers:{'Authorization':'Bearer '+token}});
     const data=await r.json();
     const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
     const url=URL.createObjectURL(blob);
