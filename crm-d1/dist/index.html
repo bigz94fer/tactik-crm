@@ -2477,6 +2477,7 @@ function createSettingsPanel(){
   sp.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;"><div style="font-size:18px;font-family:var(--hd);letter-spacing:1px;">Settings</div><button class="mo-close" onclick="document.querySelector('.sp').classList.remove('open')">✕</button></div>
   <div style="margin-bottom:16px;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;"><span class="sdot on"></span><span style="font-size:13px;color:var(--gr);">Connected to cloud</span></div></div>
   <div style="margin-bottom:16px;"><div style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);font-weight:500;margin-bottom:5px;">Change password</div><input class="fi" id="set-old-pw" type="password" placeholder="Current password" style="width:100%;margin-bottom:6px;"><input class="fi" id="set-new-pw" type="password" placeholder="New password" style="width:100%;margin-bottom:8px;"><button class="btn btn-gh btn-sm" style="width:100%;" onclick="changePassword()">Change password</button></div>
+  <div style="border-top:1px solid var(--b1);padding-top:12px;margin-bottom:8px;"><button class="btn btn-gh btn-sm" style="width:100%;" onclick="exportBackup()">⬇ Export Database Backup</button></div>
   <div style="border-top:1px solid var(--b1);padding-top:12px;"><button class="btn btn-gh btn-sm" style="width:100%;color:var(--rd);border-color:rgba(255,82,82,.3);" onclick="logout()">Sign out</button></div>`;
   document.body.appendChild(sp);
   return sp;
