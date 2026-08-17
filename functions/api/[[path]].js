@@ -1,7 +1,61 @@
 // Tactik CRM API - Cloudflare Pages Function with D1
 // Handles auth and CRUD for deals, activities, call logs, LinkedIn leads
 
-const JWT_SECRET = 'tactik-crm-jwt-secret-2026-secure';
+// JWT secret MUST come from the Pages secret binding `JWT_SECRET`
+// (Cloudflare dashboard → Workers & Pages → tactik-crm → Settings → Secrets).
+// No hardcoded fallback: auth fails closed if the binding is missing.
+function jwtSecret(env) { return (env && env.JWT_SECRET) ? env.JWT_SECRET : null; }
+
+// ─── LOGIN RATE LIMITING (D1-backed) ───
+// 8 failed attempts per IP+username → 15 min lockout. Survives worker restarts.
+const MAX_LOGIN_ATTEMPTS = 8;
+const LOCKOUT_MS = 15 * 60 * 1000;
+
+async function ensureRateTable(env) {
+  await env.DB.prepare(`CREATE TABLE IF NOT EXISTS login_attempts (
+    id TEXT PRIMARY KEY,
+    ip TEXT NOT NULL,
+    username TEXT NOT NULL,
+    fail_count INTEGER DEFAULT 0,
+    last_fail_at INTEGER,
+    locked_until INTEGER
+  )`).run();
+}
+
+async function isLoginLocked(env, ip, username) {
+  try {
+    await ensureRateTable(env);
+    const row = await env.DB.prepare('SELECT fail_count, locked_until FROM login_attempts WHERE id = ?').bind(ip + '|' + username).first();
+    if (!row) return false;
+    if (row.locked_until && row.locked_until > Date.now()) return true;
+    if (row.locked_until && row.locked_until <= Date.now()) {
+      await env.DB.prepare('DELETE FROM login_attempts WHERE id = ?').bind(ip + '|' + username).run();
+    }
+    return false;
+  } catch { return false; } // never lock out on infra error
+}
+
+async function recordLoginFailure(env, ip, username) {
+  try {
+    await ensureRateTable(env);
+    const id = ip + '|' + username;
+    const row = await env.DB.prepare('SELECT fail_count, locked_until FROM login_attempts WHERE id = ?').bind(id).first();
+    const fails = (row ? row.fail_count : 0) + 1;
+    let locked_until = null;
+    if (fails >= MAX_LOGIN_ATTEMPTS) locked_until = Date.now() + LOCKOUT_MS;
+    if (row) {
+      await env.DB.prepare('UPDATE login_attempts SET fail_count = ?, last_fail_at = ?, locked_until = ? WHERE id = ?').bind(fails, Date.now(), locked_until, id).run();
+    } else {
+      await env.DB.prepare('INSERT INTO login_attempts (id, ip, username, fail_count, last_fail_at, locked_until) VALUES (?, ?, ?, ?, ?, ?)').bind(id, ip, username, fails, Date.now(), locked_until).run();
+    }
+  } catch { /* best effort */ }
+}
+
+async function clearLoginFailures(env, ip, username) {
+  try {
+    await env.DB.prepare('DELETE FROM login_attempts WHERE id = ?').bind(ip + '|' + username).run();
+  } catch { /* best effort */ }
+}
 
 // ─── CORS ───
 function corsHeaders(request) {
@@ -34,24 +88,28 @@ async function verifyPassword(password, hash) {
 }
 
 // ─── JWT ───
-async function createToken(userId, username, role) {
+async function createToken(env, userId, username, role) {
+  const secret = jwtSecret(env);
+  if (!secret) throw new Error('JWT_SECRET binding not configured');
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=/g, '');
   const payload = btoa(JSON.stringify({
     sub: userId, username, role,
     exp: Math.floor(Date.now() / 1000) + 86400 * 7,
   })).replace(/=/g, '');
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(JWT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${header}.${payload}`));
   const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/=/g, '');
   return `${header}.${payload}.${sigB64}`;
 }
 
-async function verifyToken(token) {
+async function verifyToken(env, token) {
   try {
+    const secret = jwtSecret(env);
+    if (!secret) return null;
     const parts = token.split('.');
     if (parts.length !== 3) return null;
     const [header, payload, sig] = parts;
-    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(JWT_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['verify']);
     const sigBytes = Uint8Array.from(atob(sig), c => c.charCodeAt(0));
     const valid = await crypto.subtle.verify('HMAC', key, sigBytes, new TextEncoder().encode(`${header}.${payload}`));
     if (!valid) return null;
@@ -61,10 +119,10 @@ async function verifyToken(token) {
   } catch { return null; }
 }
 
-async function verifyAuth(request) {
+async function verifyAuth(request, env) {
   const auth = request.headers.get('Authorization');
   if (!auth || !auth.startsWith('Bearer ')) return { error: 'No token' };
-  const data = await verifyToken(auth.slice(7));
+  const data = await verifyToken(env, auth.slice(7));
   if (!data) return { error: 'Invalid token' };
   return { user: { id: data.sub, username: data.username, role: data.role } };
 }
@@ -89,7 +147,7 @@ export async function onRequest(context) {
       const body = await request.json();
       const username = body.username || 'admin';
       const password = body.password;
-      if (!password || password.length < 4) return jsonResp({ error: 'Password min 4 chars' }, 400, request);
+      if (!password || password.length < 8) return jsonResp({ error: 'Password min 8 chars' }, 400, request);
       const hash = await hashPassword(password);
       const id = 'u_' + Date.now();
       await env.DB.prepare('INSERT INTO users (id, username, password_hash, role, created_at) VALUES (?, ?, ?, ?, ?)').bind(id, username, hash, 'admin', new Date().toISOString()).run();
@@ -100,15 +158,23 @@ export async function onRequest(context) {
       const body = await request.json();
       const { username, password } = body;
       if (!username || !password) return jsonResp({ error: 'Username and password required' }, 400, request);
+      // Rate limit: 8 failed attempts → 15 min lockout (per IP + username)
+      const ip = (request.headers.get('CF-Connecting-IP') || 'unknown');
+      if (await isLoginLocked(env, ip, username)) {
+        return jsonResp({ error: 'Too many failed attempts. Try again in 15 minutes.' }, 429, request);
+      }
       const user = await env.DB.prepare('SELECT * FROM users WHERE username = ?').bind(username).first();
-      if (!user) return jsonResp({ error: 'Invalid credentials' }, 401, request);
-      if (!(await verifyPassword(password, user.password_hash))) return jsonResp({ error: 'Invalid credentials' }, 401, request);
-      const token = await createToken(user.id, user.username, user.role);
+      if (!user || !(await verifyPassword(password, user.password_hash))) {
+        await recordLoginFailure(env, ip, username);
+        return jsonResp({ error: 'Invalid credentials' }, 401, request);
+      }
+      await clearLoginFailures(env, ip, username);
+      const token = await createToken(env, user.id, user.username, user.role);
       return jsonResp({ token, user: { id: user.id, username: user.username, role: user.role } }, 200, request);
     }
 
     if (path === '/api/auth/change-password' && method === 'POST') {
-      const auth = await verifyAuth(request);
+      const auth = await verifyAuth(request, env);
       if (auth.error) return jsonResp(auth, 401, request);
       const body = await request.json();
       const dbUser = await env.DB.prepare('SELECT * FROM users WHERE id = ?').bind(auth.user.id).first();
@@ -120,7 +186,7 @@ export async function onRequest(context) {
 
     // ─── ALL OTHER /api/ ROUTES REQUIRE AUTH ───
     if (path.startsWith('/api/')) {
-      const auth = await verifyAuth(request);
+      const auth = await verifyAuth(request, env);
       if (auth.error) return jsonResp(auth, 401, request);
 
       // ─── GET /api/deals ───
