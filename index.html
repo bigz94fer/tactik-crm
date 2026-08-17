@@ -162,7 +162,11 @@ body.light .quick-log{background:#f4f4f5;}
 .pc-hd{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--s1);border-radius:var(--rsm) var(--rsm) 0 0;border:1px solid var(--b1);border-bottom:none;}
 .pc-title{font-size:10px;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.16em;}
 .pc-body{background:var(--s2);border:1px solid var(--b1);border-radius:0 0 var(--rsm) var(--rsm);min-height:320px;padding:10px;display:flex;flex-direction:column;gap:8px;transition:background .2s ease,border .2s ease;}
-.dc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rsm);padding:14px 16px;cursor:pointer;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.dc{background:var(--s1);border:1px solid var(--b1);border-radius:var(--rsm);padding:14px 16px;cursor:pointer;transition:all .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.2);position:relative;}
+.dc-chk{position:absolute;top:9px;right:9px;width:15px;height:15px;accent-color:var(--rd);cursor:pointer;z-index:2;opacity:.4;}
+.dc:hover .dc-chk{opacity:1}
+.dc-chk:checked{opacity:1}
+.dc.chk-sel{border-color:rgba(255,82,82,.55);box-shadow:0 0 0 1px rgba(255,82,82,.25);}
 .dc:hover{border-color:rgba(0,118,237,.35);transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.35),0 0 0 1px rgba(0,118,237,.08);}
 .dc-co{font-size:13px;font-weight:600;margin-bottom:4px;letter-spacing:.3px;}
 .dc-cn{font-size:11px;color:var(--t2);margin-bottom:6px;}
@@ -597,7 +601,11 @@ textarea.fi{resize:vertical;min-height:70px;line-height:1.5;}
           <option value="">All reps</option>
           <option>Udara</option><option>Naman</option><option>VA</option>
         </select>
-        <div style="margin-left:auto;font-size:12px;color:var(--t3);" id="pipe-count"></div>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--t3);cursor:pointer;user-select:none;"><input type="checkbox" id="bulk-select-all" onchange="bulkSelectAll(this.checked)" style="accent-color:var(--ac);">Select all</label>
+          <button class="btn btn-sm" id="bulk-del-btn" style="display:none;background:rgba(255,82,82,.12);color:var(--rd);border:1px solid rgba(255,82,82,.4);" onclick="bulkDelete()">Delete <span id="bulk-count">0</span></button>
+          <div style="font-size:12px;color:var(--t3);" id="pipe-count"></div>
+        </div>
       </div>
       <div class="pb-wrap"><div class="pb" id="pb"></div></div>
     </div>
@@ -1608,12 +1616,7 @@ function renderPipeline(){
   const q=((document.getElementById('pipe-search')||{}).value||'').toLowerCase().trim();
   const sf=((document.getElementById('pipe-service')||{}).value||'');
   const rf=((document.getElementById('pipe-rep')||{}).value||'');
-  const allFiltered=deals.filter(d=>{
-    if(sf&&d.enquiryType!==sf)return false;
-    if(rf&&d.owner!==rf)return false;
-    if(q&&!(d.company.toLowerCase().includes(q)||(d.contact||'').toLowerCase().includes(q)||(d.notes||'').toLowerCase().includes(q)||(d.enquiryType||'').toLowerCase().includes(q)))return false;
-    return true;
-  });
+  const allFiltered=getFilteredDeals();
   const countEl=document.getElementById('pipe-count');
   if(countEl)countEl.textContent=(q||sf||rf)?`${allFiltered.length} of ${deals.length} deals`:'';
   board.innerHTML=STAGES.map(stage=>{
@@ -1636,16 +1639,18 @@ function renderPipeline(){
       </div>
     </div>`;
   }).join('');
+  updateBulkBar();
 }
 function dCard(d){
   const td=today(),isOD=d.nextActionDate&&d.nextActionDate<td;
   const rot=rottenStatus(d);
   const cls=rot?( rot.status==='rotten'?'dc rotten':'dc warn-rotten'):'dc';
-  return`<div class="${cls}" draggable="true"
+  return`<div class="${cls}${bulkSel.has(d.id)?' chk-sel':''}" draggable="true"
     ondragstart="dragStart(event,'${d.id}')"
     ondragend="dragEnd(event)"
     onclick="editDeal('${d.id}')">
-    <div class="dc-co">${d.company}</div>
+    <input type="checkbox" class="dc-chk" ${bulkSel.has(d.id)?'checked':''} onclick="event.stopPropagation()" onchange="toggleBulk('${d.id}',this.checked)" draggable="false" title="Select for bulk delete">
+    <div class="dc-co" style="padding-right:22px;">${d.company}</div>
     <div class="dc-cn">${d.contact||'—'}${d.enquiryType?' · <span style="color:var(--t3)">'+d.enquiryType+'</span>':''}</div>
     <div class="dc-foot"><span class="dc-val">${fmt(d.value)}</span><span class="dc-src">${d.owner||'—'}</span></div>
     <div class="prob-mini">
@@ -2079,7 +2084,57 @@ function delDeal(){
   if(!editId)return;const d=deals.find(x=>x.id===editId);
   if(!confirm('Delete "'+( d?d.company:'this deal')+'"?'))return;
   deals=deals.filter(x=>x.id!==editId);acts=acts.filter(a=>a.dealId!==editId);
-  save();apiDeleteDeal(editId);closeDM();renderAll();showToast('Deleted','');
+  bulkSel.delete(editId);
+  save();apiDeleteDeal(editId);closeDM();renderAll();updateBulkBar();showToast('Deleted','');
+}
+
+// ─── BULK DELETE ──────────────────────────────────────────────────────────────
+let bulkSel=new Set();
+function getFilteredDeals(){
+  const q=((document.getElementById('pipe-search')||{}).value||'').toLowerCase().trim();
+  const sf=((document.getElementById('pipe-service')||{}).value||'');
+  const rf=((document.getElementById('pipe-rep')||{}).value||'');
+  return deals.filter(d=>{
+    if(sf&&d.enquiryType!==sf)return false;
+    if(rf&&d.owner!==rf)return false;
+    if(q&&!(d.company.toLowerCase().includes(q)||(d.contact||'').toLowerCase().includes(q)||(d.notes||'').toLowerCase().includes(q)||(d.enquiryType||'').toLowerCase().includes(q)))return false;
+    return true;
+  });
+}
+function toggleBulk(id,on){
+  if(on)bulkSel.add(id);else bulkSel.delete(id);
+  document.querySelectorAll('.dc').forEach(c=>{const chk=c.querySelector('.dc-chk');if(chk&&chk.checked)c.classList.add('chk-sel');else if(chk)c.classList.remove('chk-sel');});
+  updateBulkBar();
+}
+function bulkSelectAll(on){
+  getFilteredDeals().forEach(d=>{if(on)bulkSel.add(d.id);else bulkSel.delete(d.id);});
+  renderPipeline();
+}
+function updateBulkBar(){
+  const btn=document.getElementById('bulk-del-btn');if(!btn)return;
+  const cnt=document.getElementById('bulk-count');
+  const selAll=document.getElementById('bulk-select-all');
+  const n=bulkSel.size;
+  btn.style.display=n?'inline-block':'none';
+  if(cnt)cnt.textContent=n;
+  if(selAll){
+    const f=getFilteredDeals();
+    selAll.checked=f.length>0&&f.every(d=>bulkSel.has(d.id));
+    selAll.indeterminate=!selAll.checked&&f.some(d=>bulkSel.has(d.id));
+  }
+}
+function bulkDelete(){
+  const ids=[...bulkSel];
+  if(!ids.length)return;
+  const names=deals.filter(d=>ids.includes(d.id)).map(d=>d.company);
+  const preview=names.slice(0,8).map(n=>'• '+n).join('\n')+(names.length>8?'\n…and '+(names.length-8)+' more':'');
+  if(!confirm('Delete '+ids.length+' deal'+(ids.length>1?'s':'')+'?\n\n'+preview+'\n\nThey will be moved to Deleted Deals (restorable).'))return;
+  deals=deals.filter(d=>!ids.includes(d.id));
+  acts=acts.filter(a=>!ids.includes(a.dealId));
+  ids.forEach(id=>apiDeleteDeal(id));
+  bulkSel.clear();
+  save();renderAll();
+  showToast('Deleted '+ids.length+' deal'+(ids.length>1?'s':'')+' ✓','ok');
 }
 
 // ─── ACTIVITY CRUD ────────────────────────────────────────────────────────────
